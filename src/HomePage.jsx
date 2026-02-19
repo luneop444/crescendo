@@ -27,7 +27,7 @@ const FEATURES = [
 
 const NAV_LINKS = ["Home", "Markets", "Dashboard", "About", "Contact"];
 
-export default function HomePage({ navigate, scrollTo }) {
+export default function HomePage({ navigate, scrollTo, isLoggedIn, openAuth, user }) {
     const [loaded, setLoaded] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const [hoveredFeature, setHoveredFeature] = useState(null);
@@ -242,23 +242,62 @@ export default function HomePage({ navigate, scrollTo }) {
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 30 }}>
-                    <button
-                        onClick={() => navigate('dashboard')}
-                        style={{
-                            padding: "8px 20px",
-                            background: "transparent",
-                            color: COLORS.text,
-                            border: `1px solid rgba(255,255,255,0.15)`,
-                            borderRadius: 0, cursor: "pointer",
-                            fontFamily: "monospace", fontSize: 13, fontWeight: 600,
-                            letterSpacing: "0.1em",
-                            transition: "all 0.4s",
-                        }}
-                        onMouseEnter={(e) => { e.target.style.background = COLORS.accent; e.target.style.color = COLORS.bg; e.target.style.borderColor = COLORS.accent; }}
-                        onMouseLeave={(e) => { e.target.style.background = "transparent"; e.target.style.color = COLORS.text; e.target.style.borderColor = "rgba(255,255,255,0.15)"; }}
-                    >
-                        DASHBOARD
-                    </button>
+                    {isLoggedIn ? (
+                        <button
+                            onClick={() => navigate('dashboard')}
+                            style={{
+                                padding: "8px 20px",
+                                background: "transparent",
+                                color: COLORS.text,
+                                border: `1px solid rgba(255,255,255,0.15)`,
+                                borderRadius: 0, cursor: "pointer",
+                                fontFamily: "monospace", fontSize: 13, fontWeight: 600,
+                                letterSpacing: "0.1em",
+                                transition: "all 0.4s",
+                            }}
+                            onMouseEnter={(e) => { e.target.style.background = COLORS.accent; e.target.style.color = COLORS.bg; e.target.style.borderColor = COLORS.accent; }}
+                            onMouseLeave={(e) => { e.target.style.background = "transparent"; e.target.style.color = COLORS.text; e.target.style.borderColor = "rgba(255,255,255,0.15)"; }}
+                        >
+                            DASHBOARD
+                        </button>
+                    ) : (
+                        <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                                onClick={() => openAuth('login')}
+                                style={{
+                                    padding: "8px 18px",
+                                    background: "transparent",
+                                    color: COLORS.text,
+                                    border: `1px solid rgba(255,255,255,0.15)`,
+                                    borderRadius: 0, cursor: "pointer",
+                                    fontFamily: "monospace", fontSize: 12, fontWeight: 600,
+                                    letterSpacing: "0.1em",
+                                    transition: "all 0.4s",
+                                }}
+                                onMouseEnter={(e) => { e.target.style.background = "rgba(255,255,255,0.08)"; e.target.style.borderColor = "rgba(255,255,255,0.3)"; }}
+                                onMouseLeave={(e) => { e.target.style.background = "transparent"; e.target.style.borderColor = "rgba(255,255,255,0.15)"; }}
+                            >
+                                LOG IN
+                            </button>
+                            <button
+                                onClick={() => openAuth('signup')}
+                                style={{
+                                    padding: "8px 20px",
+                                    background: COLORS.accent,
+                                    color: COLORS.bg,
+                                    border: `1px solid ${COLORS.accent}`,
+                                    borderRadius: 0, cursor: "pointer",
+                                    fontFamily: "monospace", fontSize: 12, fontWeight: 700,
+                                    letterSpacing: "0.1em",
+                                    transition: "all 0.4s",
+                                }}
+                                onMouseEnter={(e) => { e.target.style.background = "#3dd4af"; e.target.style.borderColor = "#3dd4af"; }}
+                                onMouseLeave={(e) => { e.target.style.background = COLORS.accent; e.target.style.borderColor = COLORS.accent; }}
+                            >
+                                SIGN UP
+                            </button>
+                        </div>
+                    )}
                     <span ref={coordRef} style={{
                         fontFamily: "monospace", fontSize: 12,
                         color: COLORS.textMuted,
@@ -408,6 +447,7 @@ export default function HomePage({ navigate, scrollTo }) {
                     }}>
                         The first platform where you invest in artists like stocks.
                         Trade shares, track trends, and ride the wave before anyone else.
+                        {!isLoggedIn && <><br /><span style={{ color: COLORS.accent, fontWeight: 700 }}>Join free and start investing today.</span></>}
                     </p>
                     <span style={{
                         fontFamily: "monospace", fontSize: 11,
@@ -530,7 +570,7 @@ export default function HomePage({ navigate, scrollTo }) {
 
                             {/* Big CTA Button */}
                             <button
-                                onClick={() => navigate('dashboard')}
+                                onClick={() => isLoggedIn ? navigate('dashboard') : openAuth('signup')}
                                 style={{
                                     marginTop: 50,
                                     padding: "18px 48px",
@@ -553,7 +593,7 @@ export default function HomePage({ navigate, scrollTo }) {
                                 onMouseEnter={(e) => { e.target.style.transform = "translateY(-2px)"; e.target.style.boxShadow = `0 8px 32px ${COLORS.primary}60`; }}
                                 onMouseLeave={(e) => { e.target.style.transform = "translateY(0)"; e.target.style.boxShadow = `0 4px 24px ${COLORS.primary}40`; }}
                             >
-                                Launch Dashboard
+                                {isLoggedIn ? 'Launch Dashboard' : 'Create Free Account'}
                                 <span style={{ fontSize: 20, lineHeight: 1 }}>→</span>
                             </button>
                         </div>
@@ -648,7 +688,7 @@ export default function HomePage({ navigate, scrollTo }) {
 
                                 <div style={{ marginTop: 40 }}>
                                     <button
-                                        onClick={() => navigate('dashboard')}
+                                        onClick={() => isLoggedIn ? navigate('dashboard') : openAuth('signup')}
                                         style={{
                                             background: "none", border: "none", cursor: "pointer",
                                             fontFamily: "monospace", fontSize: 14, fontWeight: 700,
@@ -660,7 +700,7 @@ export default function HomePage({ navigate, scrollTo }) {
                                         onMouseEnter={(e) => e.target.style.color = COLORS.primary}
                                         onMouseLeave={(e) => e.target.style.color = COLORS.textDark}
                                     >
-                                        ENTER DASHBOARD
+                                        {isLoggedIn ? 'ENTER DASHBOARD' : 'GET STARTED FREE'}
                                         <span style={{ fontSize: 20, lineHeight: 1 }}>→</span>
                                     </button>
                                 </div>

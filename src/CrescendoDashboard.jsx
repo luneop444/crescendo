@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import ArtistDetailModal from "./ArtistDetailModal";
 
 // ─── Crescendo Dashboard ─── glassmorphic light mode, neon blob accents ───
 
@@ -174,11 +175,23 @@ function TabPill({ options, active, onChange }) {
   );
 }
 
-export default function CrescendoDashboard({ navigate, initialTab = "Dashboard", showProfile = false }) {
+export default function CrescendoDashboard({ navigate, initialTab = "Dashboard", showProfile = false, isLoggedIn = true, user, openAuth, onLogout }) {
   const [tab, setTab] = useState(initialTab);
   const [period, setPeriod] = useState("1W");
   const [marketPeriod, setMarketPeriod] = useState("Daily");
   const [loaded, setLoaded] = useState(false);
+  const [selectedArtist, setSelectedArtist] = useState(null);
+  const [showAuthBanner, setShowAuthBanner] = useState(false);
+
+  // Guarded click: open auth modal instead of action when not logged in
+  const guardedClick = (fn) => {
+    if (!isLoggedIn) {
+      setShowAuthBanner(true);
+      setTimeout(() => setShowAuthBanner(false), 3000);
+      return;
+    }
+    fn();
+  };
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100);
@@ -276,8 +289,22 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
             cursor: "pointer",
             transition: "all 0.2s",
           }}
-            onClick={() => navigate('profile')}
-          >LN</div>
+            onClick={() => isLoggedIn ? navigate('profile') : openAuth('signup')}
+          >{isLoggedIn ? (user?.initials || 'LN') : '→'}</div>
+          {!isLoggedIn && (
+            <button
+              onClick={() => openAuth('signup')}
+              style={{
+                padding: "8px 16px", borderRadius: 10, border: "none",
+                fontSize: 12, fontWeight: 700, cursor: "pointer",
+                fontFamily: "'Instrument Sans', sans-serif",
+                background: `linear-gradient(135deg, ${C.primary}, #5B6AE8)`,
+                color: "#fff",
+                boxShadow: `0 2px 10px ${C.primary}40`,
+                transition: "all 0.2s",
+              }}
+            >Sign Up Free</button>
+          )}
         </div>
       </header>
 
@@ -357,7 +384,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
                 <span>Artist</span><span>Price</span><span>Change</span><span>Volume</span><span>Streams</span><span></span>
               </div>
               {artists.map((a, i) => (
-                <div key={a.id} style={{
+                <div key={a.id} onClick={() => guardedClick(() => setSelectedArtist(a))} style={{
                   display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 70px",
                   alignItems: "center", padding: "14px 0",
                   borderBottom: i < artists.length - 1 ? "1px solid rgba(0,0,0,0.04)" : "none",
@@ -415,10 +442,11 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
                 const gain = (a.price - a.avgCost) * a.shares;
                 const pct = ((a.price - a.avgCost) / a.avgCost * 100).toFixed(1);
                 return (
-                  <div key={a.id} style={{
+                  <div key={a.id} onClick={() => guardedClick(() => setSelectedArtist(a))} style={{
                     display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr",
                     alignItems: "center", padding: "14px 0",
                     borderBottom: i < portfolioHoldings.length - 1 ? "1px solid rgba(0,0,0,0.04)" : "none",
+                    cursor: "pointer", transition: "background 0.15s", borderRadius: 8,
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <span style={{ fontSize: 18 }}>{a.emoji}</span>
@@ -551,7 +579,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
                     ];
                     const colors = [C.accent, "#5B6AE8", C.primary, C.green];
                     return (
-                      <div key={a.id} style={{ position: "absolute", ...positions[i], textAlign: "center" }}>
+                      <div key={a.id} onClick={() => guardedClick(() => setSelectedArtist(a))} style={{ position: "absolute", ...positions[i], textAlign: "center", cursor: "pointer" }}>
                         <div style={{
                           width: 10, height: 10, borderRadius: "50%",
                           background: colors[i], margin: "0 auto 4px",
@@ -716,7 +744,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
                 </div>
 
                 {artists.sort((a, b) => parseFloat(b.volume) - parseFloat(a.volume)).map((a, i) => (
-                  <div key={a.id} style={{
+                  <div key={a.id} onClick={() => guardedClick(() => setSelectedArtist(a))} style={{
                     display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 70px",
                     alignItems: "center", padding: "12px 0",
                     borderBottom: i < artists.length - 1 ? "1px solid rgba(0,0,0,0.04)" : "none",
@@ -898,7 +926,9 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
                           <span style={{
                             padding: "5px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600,
                             background: C.primary, color: "#fff", cursor: "pointer",
-                          }}>Invest →</span>
+                          }}
+                            onClick={(e) => { e.stopPropagation(); guardedClick(() => setSelectedArtist(matchedArtist)); }}
+                          >Invest →</span>
                         </div>
                       )}
                     </div>
@@ -939,6 +969,93 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
           </Card>
         </>)}
       </main>
+      {/* Floating sign-up banner for non-authenticated users */}
+      {showAuthBanner && (
+        <div style={{
+          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
+          zIndex: 250,
+          background: "rgba(17,24,39,0.95)",
+          backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+          borderRadius: 16, padding: "16px 28px",
+          display: "flex", alignItems: "center", gap: 16,
+          boxShadow: "0 8px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08)",
+          animation: "slideUp 0.4s cubic-bezier(0.22,1,0.36,1)",
+          color: "#fff",
+          fontFamily: "'Instrument Sans', sans-serif",
+        }}>
+          <style>{`@keyframes slideUp { from { opacity:0; transform:translate(-50%,20px); } to { opacity:1; transform:translate(-50%,0); } }`}</style>
+          <span style={{ fontSize: 22 }}>🔒</span>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>Create a free account to invest</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Sign up to trade shares and build your portfolio</div>
+          </div>
+          <button
+            onClick={() => openAuth('signup')}
+            style={{
+              padding: "10px 24px", borderRadius: 10, border: "none",
+              fontSize: 13, fontWeight: 700, cursor: "pointer",
+              fontFamily: "'Instrument Sans', sans-serif",
+              background: `linear-gradient(135deg, ${C.primary}, #5B6AE8)`,
+              color: "#fff", whiteSpace: "nowrap",
+              boxShadow: `0 4px 16px ${C.primary}40`,
+            }}
+          >Sign Up Free</button>
+        </div>
+      )}
+
+      {/* Persistent bottom CTA bar for non-authenticated users */}
+      {!isLoggedIn && !showAuthBanner && (
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0,
+          zIndex: 199,
+          background: "linear-gradient(0deg, rgba(234,240,250,1) 0%, rgba(234,240,250,0.95) 60%, rgba(234,240,250,0) 100%)",
+          padding: "60px 32px 24px",
+          display: "flex", justifyContent: "center",
+        }}>
+          <div style={{
+            background: "rgba(17,24,39,0.92)",
+            backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+            borderRadius: 16, padding: "14px 28px",
+            display: "flex", alignItems: "center", gap: 16,
+            boxShadow: "0 4px 24px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.06)",
+            color: "#fff",
+            fontFamily: "'Instrument Sans', sans-serif",
+          }}>
+            <span style={{ fontSize: 14, color: "rgba(255,255,255,0.7)" }}>
+              Viewing in <strong style={{ color: "#fff" }}>preview mode</strong> — sign up to start investing
+            </span>
+            <button
+              onClick={() => openAuth('signup')}
+              style={{
+                padding: "8px 20px", borderRadius: 10, border: "none",
+                fontSize: 12, fontWeight: 700, cursor: "pointer",
+                fontFamily: "'Instrument Sans', sans-serif",
+                background: C.accent, color: "#0D1117",
+                whiteSpace: "nowrap",
+              }}
+            >Create Account</button>
+            <button
+              onClick={() => openAuth('login')}
+              style={{
+                padding: "8px 16px", borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.15)",
+                fontSize: 12, fontWeight: 600, cursor: "pointer",
+                fontFamily: "'Instrument Sans', sans-serif",
+                background: "transparent", color: "rgba(255,255,255,0.7)",
+                whiteSpace: "nowrap",
+              }}
+            >Log In</button>
+          </div>
+        </div>
+      )}
+
+      {/* Artist Detail Modal */}
+      <ArtistDetailModal
+        artist={selectedArtist}
+        onClose={() => setSelectedArtist(null)}
+        allNews={news}
+        trendingSounds={trendingSounds}
+      />
     </div>
   );
 }
