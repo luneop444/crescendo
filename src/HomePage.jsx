@@ -163,6 +163,8 @@ export default function HomePage({ navigate, scrollTo, isLoggedIn, openAuth, use
 
     return (
         <div style={{
+            letterSpacing: "-0.02em",
+            lineHeight: 1.35,
             fontFamily: "'Inter', sans-serif",
             background: COLORS.bg,
             color: COLORS.text,
@@ -442,7 +444,7 @@ export default function HomePage({ navigate, scrollTo, isLoggedIn, openAuth, use
                     }}>CRESCENDO</span>
                     <p style={{
                         maxWidth: 380, textAlign: "center",
-                        fontSize: 14, lineHeight: 1.7,
+                        fontSize: 14, lineHeight: 1.35,
                         color: "rgba(255,255,255,0.55)",
                     }}>
                         The first platform where you invest in artists like stocks.
@@ -552,7 +554,7 @@ export default function HomePage({ navigate, scrollTo, isLoggedIn, openAuth, use
                         <div style={{ maxWidth: 1000, position: "relative" }}>
                             <p style={{
                                 fontSize: "clamp(28px, 4vw, 48px)",
-                                fontWeight: 700, lineHeight: 1.35,
+                                fontWeight: 700, lineHeight: 1.2,
                                 letterSpacing: "-0.02em", marginBottom: 30,
                             }}>
                                 We believe music is more than entertainment — it's culture, community, and
@@ -561,7 +563,7 @@ export default function HomePage({ navigate, scrollTo, isLoggedIn, openAuth, use
                             </p>
                             <p style={{
                                 fontSize: "clamp(28px, 4vw, 48px)",
-                                fontWeight: 700, lineHeight: 1.35,
+                                fontWeight: 700, lineHeight: 1.2,
                                 letterSpacing: "-0.02em",
                             }}>
                                 Everything we build is designed for music lovers and investors alike,

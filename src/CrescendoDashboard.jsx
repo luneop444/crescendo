@@ -211,6 +211,8 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
       color: C.text,
       position: "relative",
       overflow: "hidden",
+      letterSpacing: "-0.02em",
+      lineHeight: 1.35,
     }}>
       {/* font loaded from index.html */}
       <style>{`
@@ -484,7 +486,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
                       boxShadow: `0 0 8px ${n.up ? C.green : C.red}50`,
                     }} />
                     <div>
-                      <div style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 8 }}>
+                      <div style={{ fontSize: 14, lineHeight: 1.3, marginBottom: 8 }}>
                         <span style={{ fontWeight: 700, color: C.primary }}>{n.artist}</span>
                         <span style={{ color: C.textSec }}> — {n.text}</span>
                       </div>
@@ -713,7 +715,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
                   <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.3, marginBottom: 4 }}>
                     Discover <span style={{ fontStyle: "italic" }}>rising</span> artists
                   </div>
-                  <div style={{ fontSize: 12, color: C.textSec, lineHeight: 1.4 }}>
+                  <div style={{ fontSize: 12, color: C.textSec, lineHeight: 1.25 }}>
                     Browse trending markets and find your next investment before they blow up.
                   </div>
                   <div style={{
@@ -958,7 +960,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
                     boxShadow: `0 0 6px ${n.up ? C.green : C.red}50`,
                   }} />
                   <div>
-                    <div style={{ fontSize: 13, lineHeight: 1.5 }}>
+                    <div style={{ fontSize: 13, lineHeight: 1.3 }}>
                       <span style={{ fontWeight: 600, color: C.primary }}>{n.artist}</span>
                       <span style={{ color: C.textSec }}> — {n.text}</span>
                     </div>

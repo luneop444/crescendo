@@ -161,6 +161,8 @@ export default function ArtistDetailModal({ artist, onClose, allNews, trendingSo
                 overflowY: "auto",
                 overflowX: "hidden",
                 fontFamily: "'Inter', sans-serif",
+                letterSpacing: "-0.02em",
+                lineHeight: 1.35,
             }}>
                 {/* font loaded from index.html */}
 
@@ -372,7 +374,7 @@ export default function ArtistDetailModal({ artist, onClose, allNews, trendingSo
                                         boxShadow: `0 0 6px ${n.up ? C.green : C.red}50`,
                                     }} />
                                     <div>
-                                        <div style={{ fontSize: 13, lineHeight: 1.5, color: C.textSec }}>{n.text}</div>
+                                        <div style={{ fontSize: 13, lineHeight: 1.3, color: C.textSec }}>{n.text}</div>
                                         <div style={{ fontSize: 11, color: C.textMuted, marginTop: 3 }}>{n.time} ago</div>
                                     </div>
                                 </div>
@@ -651,7 +653,7 @@ export default function ArtistDetailModal({ artist, onClose, allNews, trendingSo
                                             padding: 14, borderRadius: 14, marginBottom: 10,
                                             background: `${orderType === "buy" ? C.green : C.red}08`,
                                             border: `1px solid ${orderType === "buy" ? C.green : C.red}20`,
-                                            fontSize: 13, color: C.textSec, textAlign: "center", lineHeight: 1.5,
+                                            fontSize: 13, color: C.textSec, textAlign: "center", lineHeight: 1.3,
                                         }}>
                                             Confirm: {orderType === "buy" ? "Buy" : "Sell"} <strong>{quantity}</strong> share{quantity !== 1 ? "s" : ""} of <strong>{artist.name}</strong> for <strong>${totalCost.toFixed(2)}</strong>
                                         </div>
