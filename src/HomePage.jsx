@@ -169,7 +169,7 @@ export default function HomePage({ navigate, scrollTo, isLoggedIn, openAuth, use
             position: "relative",
             cursor: "none",
         }}>
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+            {/* font loaded from index.html */}
             <style>{`
         * { margin: 0; padding: 0; box-sizing: border-box; cursor: none !important; }
         ::selection { background: ${COLORS.accent}40; color: #fff; }

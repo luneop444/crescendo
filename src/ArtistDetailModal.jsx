@@ -160,9 +160,9 @@ export default function ArtistDetailModal({ artist, onClose, allNews, trendingSo
                 transition: "transform 0.4s cubic-bezier(0.22,1,0.36,1)",
                 overflowY: "auto",
                 overflowX: "hidden",
-                fontFamily: "'Instrument Sans', sans-serif",
+                fontFamily: "'Inter', sans-serif",
             }}>
-                <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+                {/* font loaded from index.html */}
 
                 {/* Close button */}
                 <button
@@ -235,7 +235,7 @@ export default function ArtistDetailModal({ artist, onClose, allNews, trendingSo
                                     <button key={p} onClick={() => setChartPeriod(p)} style={{
                                         padding: "4px 10px", borderRadius: 6, border: "none",
                                         fontSize: 11, fontWeight: 500, cursor: "pointer",
-                                        fontFamily: "'Instrument Sans', sans-serif",
+                                        fontFamily: "'Inter', sans-serif",
                                         background: chartPeriod === p ? "#fff" : "transparent",
                                         color: chartPeriod === p ? C.text : C.textMuted,
                                         boxShadow: chartPeriod === p ? "0 1px 4px rgba(0,0,0,0.06)" : "none",
@@ -268,7 +268,7 @@ export default function ArtistDetailModal({ artist, onClose, allNews, trendingSo
                                 boxShadow: C.shadow, padding: "14px 14px",
                                 textAlign: "center",
                             }}>
-                                <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>{s.label}</div>
+                                <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, fontFamily: "monospace" }}>{s.label}</div>
                                 <div style={{ fontSize: 14, fontWeight: 700 }}>{s.value}</div>
                             </div>
                         ))}
@@ -312,7 +312,7 @@ export default function ArtistDetailModal({ artist, onClose, allNews, trendingSo
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                             {/* Bids */}
                             <div>
-                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace", marginBottom: 8 }}>
                                     <span>Bid Price</span><span>Qty</span>
                                 </div>
                                 {orderBook.bids.map((b, i) => (
@@ -332,7 +332,7 @@ export default function ArtistDetailModal({ artist, onClose, allNews, trendingSo
                             </div>
                             {/* Asks */}
                             <div>
-                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace", marginBottom: 8 }}>
                                     <span>Ask Price</span><span>Qty</span>
                                 </div>
                                 {orderBook.asks.map((a, i) => (
@@ -455,7 +455,7 @@ export default function ArtistDetailModal({ artist, onClose, allNews, trendingSo
                                 <button key={t} onClick={() => setOrderType(t)} style={{
                                     flex: 1, padding: "10px 0", borderRadius: 10, border: "none",
                                     fontSize: 14, fontWeight: 600, cursor: "pointer",
-                                    fontFamily: "'Instrument Sans', sans-serif",
+                                    fontFamily: "'Inter', sans-serif",
                                     textTransform: "capitalize",
                                     background: orderType === t
                                         ? (t === "buy" ? C.green : C.red)
@@ -476,7 +476,7 @@ export default function ArtistDetailModal({ artist, onClose, allNews, trendingSo
                                 <button key={m.key} onClick={() => setOrderMode(m.key)} style={{
                                     flex: 1, padding: "7px 0", borderRadius: 8, border: "none",
                                     fontSize: 12, fontWeight: 500, cursor: "pointer",
-                                    fontFamily: "'Instrument Sans', sans-serif",
+                                    fontFamily: "'Inter', sans-serif",
                                     background: orderMode === m.key ? "#fff" : "transparent",
                                     color: orderMode === m.key ? C.text : C.textMuted,
                                     boxShadow: orderMode === m.key ? "0 1px 4px rgba(0,0,0,0.06)" : "none",
@@ -582,7 +582,7 @@ export default function ArtistDetailModal({ artist, onClose, allNews, trendingSo
                                 background: "rgba(0,0,0,0.02)",
                                 border: "1px solid rgba(0,0,0,0.04)",
                             }}>
-                                <div style={{ fontSize: 12, fontWeight: 600, color: C.textSec, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: C.textSec, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>
                                     Order Summary
                                 </div>
                                 {[

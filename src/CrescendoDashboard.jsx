@@ -71,7 +71,7 @@ function ProgressBar({ value, max, color1, color2, label1, label2, val1, val2 })
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 12, color: C.textSec }}>
         <span>{label1}</span>
-        <span style={{ fontWeight: 700, color: C.text, fontSize: 18, fontFamily: "'Instrument Sans', sans-serif" }}>${max.toLocaleString()}</span>
+        <span style={{ fontWeight: 700, color: C.text, fontSize: 18, fontFamily: "'Inter', sans-serif" }}>${max.toLocaleString()}</span>
       </div>
       <div style={{ height: 10, borderRadius: 99, background: "rgba(0,0,0,0.04)", overflow: "hidden", position: "relative" }}>
         <div style={{
@@ -164,7 +164,7 @@ function TabPill({ options, active, onChange }) {
         <button key={o} onClick={() => onChange(o)} style={{
           padding: "5px 14px", borderRadius: 8, border: "none",
           fontSize: 12, fontWeight: 500, cursor: "pointer",
-          fontFamily: "'Instrument Sans', sans-serif",
+          fontFamily: "monospace",
           background: active === o ? "#fff" : "transparent",
           color: active === o ? C.text : C.textMuted,
           boxShadow: active === o ? "0 1px 4px rgba(0,0,0,0.06)" : "none",
@@ -205,14 +205,14 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
 
   return (
     <div style={{
-      fontFamily: "'Instrument Sans', sans-serif",
+      fontFamily: "'Inter', sans-serif",
       background: C.bg,
       minHeight: "100vh",
       color: C.text,
       position: "relative",
       overflow: "hidden",
     }}>
-      <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      {/* font loaded from index.html */}
       <style>{`
         * { margin: 0; padding: 0; box-sizing: border-box; }
         ::-webkit-scrollbar { width: 6px; }
@@ -257,8 +257,9 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
           {["Dashboard", "Markets", "Portfolio", "News"].map(t => (
             <button key={t} onClick={() => { setTab(t); navigate(t.toLowerCase()); }} style={{
               padding: "8px 20px", borderRadius: 10, border: "none",
-              fontSize: 13, fontWeight: 500, cursor: "pointer",
-              fontFamily: "'Instrument Sans', sans-serif",
+              fontSize: 12, fontWeight: 600, cursor: "pointer",
+              fontFamily: "monospace",
+              letterSpacing: "0.06em",
               background: tab === t && !showProfile ? "#fff" : "transparent",
               color: tab === t && !showProfile ? C.text : C.textSec,
               boxShadow: tab === t && !showProfile ? "0 1px 6px rgba(0,0,0,0.06)" : "none",
@@ -297,7 +298,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
               style={{
                 padding: "8px 16px", borderRadius: 10, border: "none",
                 fontSize: 12, fontWeight: 700, cursor: "pointer",
-                fontFamily: "'Instrument Sans', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 background: `linear-gradient(135deg, ${C.primary}, #5B6AE8)`,
                 color: "#fff",
                 boxShadow: `0 2px 10px ${C.primary}40`,
@@ -379,7 +380,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
               <div style={{
                 display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 70px",
                 padding: "0 0 10px 0", borderBottom: "1px solid rgba(0,0,0,0.05)",
-                fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em",
+                fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace",
               }}>
                 <span>Artist</span><span>Price</span><span>Change</span><span>Volume</span><span>Streams</span><span></span>
               </div>
@@ -433,7 +434,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
               <div style={{
                 display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr",
                 padding: "0 0 10px 0", borderBottom: "1px solid rgba(0,0,0,0.05)",
-                fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em",
+                fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace",
               }}>
                 <span>Artist</span><span>Shares</span><span>Avg Cost</span><span>Value</span><span>Return</span>
               </div>
@@ -738,7 +739,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
                   display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 70px",
                   padding: "0 0 10px 0", borderBottom: "1px solid rgba(0,0,0,0.05)",
                   fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase",
-                  letterSpacing: "0.05em",
+                  letterSpacing: "0.08em", fontFamily: "monospace",
                 }}>
                   <span>Artist</span><span>Price</span><span>Change</span><span>Volume</span><span></span>
                 </div>
@@ -981,7 +982,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
           boxShadow: "0 8px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08)",
           animation: "slideUp 0.4s cubic-bezier(0.22,1,0.36,1)",
           color: "#fff",
-          fontFamily: "'Instrument Sans', sans-serif",
+          fontFamily: "'Inter', sans-serif",
         }}>
           <style>{`@keyframes slideUp { from { opacity:0; transform:translate(-50%,20px); } to { opacity:1; transform:translate(-50%,0); } }`}</style>
           <span style={{ fontSize: 22 }}>🔒</span>
@@ -994,7 +995,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
             style={{
               padding: "10px 24px", borderRadius: 10, border: "none",
               fontSize: 13, fontWeight: 700, cursor: "pointer",
-              fontFamily: "'Instrument Sans', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               background: `linear-gradient(135deg, ${C.primary}, #5B6AE8)`,
               color: "#fff", whiteSpace: "nowrap",
               boxShadow: `0 4px 16px ${C.primary}40`,
@@ -1019,7 +1020,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
             display: "flex", alignItems: "center", gap: 16,
             boxShadow: "0 4px 24px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.06)",
             color: "#fff",
-            fontFamily: "'Instrument Sans', sans-serif",
+            fontFamily: "'Inter', sans-serif",
           }}>
             <span style={{ fontSize: 14, color: "rgba(255,255,255,0.7)" }}>
               Viewing in <strong style={{ color: "#fff" }}>preview mode</strong> — sign up to start investing
@@ -1029,7 +1030,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
               style={{
                 padding: "8px 20px", borderRadius: 10, border: "none",
                 fontSize: 12, fontWeight: 700, cursor: "pointer",
-                fontFamily: "'Instrument Sans', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 background: C.accent, color: "#0D1117",
                 whiteSpace: "nowrap",
               }}
@@ -1040,7 +1041,7 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
                 padding: "8px 16px", borderRadius: 10,
                 border: "1px solid rgba(255,255,255,0.15)",
                 fontSize: 12, fontWeight: 600, cursor: "pointer",
-                fontFamily: "'Instrument Sans', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 background: "transparent", color: "rgba(255,255,255,0.7)",
                 whiteSpace: "nowrap",
               }}
