@@ -27,10 +27,22 @@ const FEATURES = [
 
 const NAV_LINKS = ["Home", "Markets", "Dashboard", "About", "Contact"];
 
-export default function HomePage({ onEnterDashboard }) {
+export default function HomePage({ navigate, scrollTo }) {
     const [loaded, setLoaded] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const [hoveredFeature, setHoveredFeature] = useState(null);
+
+    // Refs for scroll-to-section (About / Contact)
+    const aboutRef = useRef(null);
+    const contactRef = useRef(null);
+
+    useEffect(() => {
+        if (scrollTo === 'about' && aboutRef.current) {
+            setTimeout(() => aboutRef.current.scrollIntoView({ behavior: 'smooth' }), 300);
+        } else if (scrollTo === 'contact' && contactRef.current) {
+            setTimeout(() => contactRef.current.scrollIntoView({ behavior: 'smooth' }), 300);
+        }
+    }, [scrollTo]);
 
     // ─── Refs for rAF-driven animation (no re-renders) ───
     const mouseTarget = useRef({ x: -100, y: -100 });
@@ -213,7 +225,10 @@ export default function HomePage({ onEnterDashboard }) {
                 opacity: loaded ? 1 : 0,
                 transition: "opacity 0.8s 0.2s",
             }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div
+                    onClick={() => { navigate('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
+                >
                     <div style={{
                         width: 28, height: 28, borderRadius: 8,
                         background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.blue})`,
@@ -228,7 +243,7 @@ export default function HomePage({ onEnterDashboard }) {
 
                 <div style={{ display: "flex", alignItems: "center", gap: 30 }}>
                     <button
-                        onClick={onEnterDashboard}
+                        onClick={() => navigate('dashboard')}
                         style={{
                             padding: "8px 20px",
                             background: "transparent",
@@ -288,7 +303,7 @@ export default function HomePage({ onEnterDashboard }) {
                         key={link}
                         onClick={() => {
                             setMenuOpen(false);
-                            if (link === "Dashboard" && onEnterDashboard) onEnterDashboard();
+                            navigate(link.toLowerCase());
                         }}
                         style={{
                             background: "none", border: "none", cursor: "pointer",
@@ -482,7 +497,7 @@ export default function HomePage({ onEnterDashboard }) {
                 }}>
 
                     {/* ─── ABOUT ─── */}
-                    <section style={{
+                    <section ref={aboutRef} style={{
                         position: "relative",
                         padding: "120px 60px 100px",
                         background: COLORS.bgLight,
@@ -515,7 +530,7 @@ export default function HomePage({ onEnterDashboard }) {
 
                             {/* Big CTA Button */}
                             <button
-                                onClick={onEnterDashboard}
+                                onClick={() => navigate('dashboard')}
                                 style={{
                                     marginTop: 50,
                                     padding: "18px 48px",
@@ -633,7 +648,7 @@ export default function HomePage({ onEnterDashboard }) {
 
                                 <div style={{ marginTop: 40 }}>
                                     <button
-                                        onClick={onEnterDashboard}
+                                        onClick={() => navigate('dashboard')}
                                         style={{
                                             background: "none", border: "none", cursor: "pointer",
                                             fontFamily: "monospace", fontSize: 14, fontWeight: 700,
@@ -654,7 +669,7 @@ export default function HomePage({ onEnterDashboard }) {
                     </section>
 
                     {/* ─── FOOTER ─── */}
-                    <section style={{
+                    <section ref={contactRef} style={{
                         position: "relative",
                         padding: "100px 60px 40px",
                         background: COLORS.bgLight,
@@ -680,9 +695,30 @@ export default function HomePage({ onEnterDashboard }) {
                             gap: 60, maxWidth: 900, paddingBottom: 60,
                         }}>
                             {[
-                                { label: "PLATFORM", items: ["Markets", "Dashboard", "Portfolio", "Trending"] },
-                                { label: "COMPANY", items: ["About", "Careers", "Press", "Legal"] },
-                                { label: "EXTERNAL", items: ["Twitter / X", "Instagram", "Discord", "LinkedIn"] },
+                                {
+                                    label: "PLATFORM", items: [
+                                        { name: "Markets", page: "markets" },
+                                        { name: "Dashboard", page: "dashboard" },
+                                        { name: "Portfolio", page: "portfolio" },
+                                        { name: "Trending", page: "dashboard" },
+                                    ]
+                                },
+                                {
+                                    label: "COMPANY", items: [
+                                        { name: "About", page: "about" },
+                                        { name: "Careers", page: null },
+                                        { name: "Press", page: null },
+                                        { name: "Legal", page: null },
+                                    ]
+                                },
+                                {
+                                    label: "EXTERNAL", items: [
+                                        { name: "Twitter / X", page: null },
+                                        { name: "Instagram", page: null },
+                                        { name: "Discord", page: null },
+                                        { name: "LinkedIn", page: null },
+                                    ]
+                                },
                             ].map(col => (
                                 <div key={col.label}>
                                     <div style={{
@@ -691,15 +727,18 @@ export default function HomePage({ onEnterDashboard }) {
                                         marginBottom: 16, color: COLORS.textDarkMuted,
                                     }}>{col.label}</div>
                                     {col.items.map(l => (
-                                        <div key={l} style={{
-                                            fontFamily: "monospace", fontSize: 13,
-                                            marginBottom: 8, cursor: "pointer",
-                                            textTransform: "uppercase", letterSpacing: "0.05em",
-                                            color: COLORS.textDark, transition: "color 0.2s",
-                                        }}
-                                            onMouseEnter={(e) => e.target.style.color = COLORS.primary}
-                                            onMouseLeave={(e) => e.target.style.color = COLORS.textDark}
-                                        >{l}</div>
+                                        <div key={l.name}
+                                            onClick={() => l.page && navigate(l.page)}
+                                            style={{
+                                                fontFamily: "monospace", fontSize: 13,
+                                                marginBottom: 8, cursor: l.page ? "pointer" : "default",
+                                                textTransform: "uppercase", letterSpacing: "0.05em",
+                                                color: COLORS.textDark, transition: "color 0.2s",
+                                                opacity: l.page ? 1 : 0.5,
+                                            }}
+                                            onMouseEnter={(e) => l.page && (e.target.style.color = COLORS.primary)}
+                                            onMouseLeave={(e) => l.page && (e.target.style.color = COLORS.textDark)}
+                                        >{l.name}</div>
                                     ))}
                                 </div>
                             ))}
