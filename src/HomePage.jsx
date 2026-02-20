@@ -375,6 +375,7 @@ export default function HomePage({ navigate, scrollTo, isLoggedIn, openAuth, use
                 position: "fixed",
                 top: 0, left: 0, right: 0,
                 height: "100vh",
+                paddingTop: 140,
                 display: "flex", flexDirection: "column",
                 justifyContent: "center", alignItems: "center",
                 overflow: "hidden",
