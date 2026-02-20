@@ -102,6 +102,7 @@ export default function AuthModal({ isOpen, onClose, onAuth, initialMode = "sign
         <>
             {/* Backdrop */}
             <div
+                data-auth-backdrop
                 onClick={handleClose}
                 style={{
                     position: "fixed", inset: 0, zIndex: 300,
@@ -113,7 +114,7 @@ export default function AuthModal({ isOpen, onClose, onAuth, initialMode = "sign
             />
 
             {/* Modal */}
-            <div style={{
+            <div data-auth-modal style={{
                 position: "fixed",
                 top: "50%", left: "50%",
                 transform: visible
@@ -373,6 +374,10 @@ export default function AuthModal({ isOpen, onClose, onAuth, initialMode = "sign
                 <style>{`
           @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
           input::placeholder { color: rgba(255,255,255,0.25); }
+          [data-auth-modal], [data-auth-modal] * { cursor: auto !important; }
+          [data-auth-modal] button, [data-auth-modal] a { cursor: pointer !important; }
+          [data-auth-modal] input { cursor: text !important; }
+          [data-auth-backdrop] { cursor: auto !important; }
         `}</style>
             </div>
         </>
