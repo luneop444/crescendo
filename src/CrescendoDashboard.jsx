@@ -574,184 +574,142 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
         })()}
 
         {/* ─── PORTFOLIO PAGE ─── */}
-        {!showProfile && tab === "Portfolio" && (
-          <div style={fadeIn(0.1)}>
-            <div style={{ marginBottom: 24 }}>
-              <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 4 }}>Portfolio</h1>
-              <p style={{ fontSize: 14, color: C.textSec }}>Your holdings and investment performance</p>
-            </div>
-
-            {/* ── Overview Stat Cards ── */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 14, marginBottom: 20 }}>
-              {[
-                { label: "Total Value", value: `$${totalValue.toFixed(2)}`, icon: "💰", gradient: `linear-gradient(135deg, ${C.primary}18, ${C.accent}12)`, accent: C.primary },
-                { label: "Total Return", value: `+$${totalReturn.toFixed(2)}`, icon: "📈", gradient: `linear-gradient(135deg, ${C.accent}20, ${C.green}15)`, accent: C.accentDark },
-                { label: "Return %", value: `+${totalPct}%`, icon: "⚡", gradient: `linear-gradient(135deg, ${C.green}18, ${C.accent}10)`, accent: C.green },
-                { label: "Total Shares", value: portfolioHoldings.reduce((s, a) => s + a.shares, 0).toString(), icon: "🎵", gradient: `linear-gradient(135deg, ${C.primary}12, rgba(91,106,232,0.12))`, accent: "#5B6AE8" },
-              ].map(s => (
-                <div key={s.label} style={{
-                  background: s.gradient,
-                  backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-                  borderRadius: 20, padding: "20px 22px",
-                  border: "1px solid rgba(255,255,255,0.6)",
-                  boxShadow: "0 4px 24px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.6)",
-                  position: "relative", overflow: "hidden",
-                }}>
-                  <div style={{
-                    position: "absolute", top: -20, right: -20, width: 70, height: 70,
-                    borderRadius: "50%", background: `${s.accent}10`,
-                    filter: "blur(18px)", pointerEvents: "none",
-                  }} />
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                    <div style={{
-                      fontSize: 10, fontWeight: 600, color: C.textMuted,
-                      textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace",
-                    }}>{s.label}</div>
-                    <span style={{ fontSize: 18 }}>{s.icon}</span>
-                  </div>
-                  <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.03em", color: C.text }}>{s.value}</div>
+        {!showProfile && tab === "Portfolio" && (() => {
+          const sorted = [...portfolioHoldings].sort((a, b) => (b.shares * b.price) - (a.shares * a.price));
+          const totalShares = portfolioHoldings.reduce((s, a) => s + a.shares, 0);
+          const treemapColors = [
+            `linear-gradient(135deg, ${C.accent}50, ${C.green}30)`,
+            `linear-gradient(135deg, ${C.accent}35, ${C.accentDark}25)`,
+            `linear-gradient(135deg, ${C.primary}25, #5B6AE820)`,
+            `linear-gradient(135deg, ${C.accent}28, ${C.green}18)`,
+          ];
+          return (
+            <div style={fadeIn(0.1)}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
+                <div>
+                  <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 4 }}>Portfolio</h1>
+                  <p style={{ fontSize: 13, color: C.textSec }}>{portfolioHoldings.length} Holdings · Sorted by Value · Total ${totalValue.toFixed(0)}</p>
                 </div>
-              ))}
-            </div>
-
-            {/* ── Holdings Treemap Grid ── */}
-            <div style={{ marginBottom: 20 }}>
-              <div style={{
-                fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 10,
-                textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace",
-              }}>Holdings Allocation</div>
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${portfolioHoldings.length}, 1fr)`, gap: 8 }}>
-                {portfolioHoldings.map((a) => {
-                  const val = a.shares * a.price;
-                  const pct = (val / totalValue * 100).toFixed(0);
-                  const gain = ((a.price - a.avgCost) / a.avgCost * 100).toFixed(1);
-                  const colors = [
-                    { bg: `linear-gradient(135deg, ${C.accent}40, ${C.green}25)`, border: `${C.accent}50` },
-                    { bg: `linear-gradient(135deg, ${C.primary}30, #5B6AE830)`, border: `${C.primary}40` },
-                    { bg: `linear-gradient(135deg, ${C.accent}25, ${C.accentDark}20)`, border: `${C.accent}35` },
-                  ];
-                  const ci = portfolioHoldings.indexOf(a) % colors.length;
-                  return (
-                    <div key={a.id} onClick={() => guardedClick(() => setSelectedArtist(a))} style={{
-                      background: colors[ci].bg,
-                      backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-                      borderRadius: 18, padding: "20px 18px",
-                      border: `1px solid ${colors[ci].border}`,
-                      boxShadow: "0 2px 16px rgba(0,0,0,0.03)",
-                      cursor: "pointer", transition: "all 0.2s",
-                      minHeight: 120, display: "flex", flexDirection: "column", justifyContent: "space-between",
-                    }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,0,0,0.08)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 16px rgba(0,0,0,0.03)"; }}
-                    >
-                      <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                          <span style={{ fontSize: 20 }}>{a.emoji}</span>
-                          <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.02em" }}>{a.name}</div>
-                        </div>
-                        <div style={{ fontSize: 11, color: C.textSec, fontFamily: "monospace", marginBottom: 4 }}>{a.genre}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 2 }}>${val.toFixed(0)}</div>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <span style={{
-                            fontSize: 11, fontWeight: 600, fontFamily: "monospace",
-                            padding: "2px 8px", borderRadius: 6,
-                            background: "rgba(255,255,255,0.4)",
-                            color: C.accentDark,
-                          }}>▲ {gain}%</span>
-                          <span style={{ fontSize: 11, color: C.textMuted }}>{pct}% of portfolio</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                <TabPill options={["Value", "%"]} active={period} onChange={setPeriod} />
               </div>
-            </div>
-
-            {/* ── Bottom Section: Performance + Holdings Detail ── */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 }}>
-
-              {/* Performance Card */}
-              <div style={{
-                background: "rgba(255,255,255,0.55)",
-                backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-                borderRadius: 20, padding: "22px 24px",
-                border: "1px solid rgba(255,255,255,0.7)",
-                boxShadow: "0 2px 16px rgba(0,0,0,0.03)",
-              }}>
-                <div style={{
-                  fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4,
-                  textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace",
-                }}>Weekly Performance</div>
-                <div style={{ fontSize: 12, color: C.textSec, marginBottom: 16 }}>Portfolio value · Last 7 days</div>
-                <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 4 }}>
-                  ${totalValue.toFixed(0)}
-                </div>
-                <div style={{
-                  display: "inline-flex", alignItems: "center", gap: 4,
-                  padding: "4px 10px", borderRadius: 8, background: C.greenSoft,
-                  fontSize: 12, fontWeight: 600, fontFamily: "monospace", color: C.accentDark,
-                  marginBottom: 16,
-                }}>▲ {totalPct}%</div>
-                {/* Mini chart */}
-                <svg width="100%" height="60" viewBox="0 0 300 60">
-                  <defs>
-                    <linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={C.accent} stopOpacity="0.3" />
-                      <stop offset="100%" stopColor={C.accent} stopOpacity="0.02" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,50 Q50,45 75,38 T150,28 T225,18 T300,10" fill="none" stroke={C.accentDark} strokeWidth="2" />
-                  <path d="M0,50 Q50,45 75,38 T150,28 T225,18 T300,10 L300,60 L0,60 Z" fill="url(#perfGrad)" />
-                </svg>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.textMuted, fontFamily: "monospace", marginTop: 4 }}>
-                  <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
-                </div>
-              </div>
-
-              {/* Recent Activity Card */}
-              <div style={{
-                background: "rgba(255,255,255,0.55)",
-                backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-                borderRadius: 20, padding: "22px 24px",
-                border: "1px solid rgba(255,255,255,0.7)",
-                boxShadow: "0 2px 16px rgba(0,0,0,0.03)",
-              }}>
-                <div style={{
-                  fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4,
-                  textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace",
-                }}>Recent Activity</div>
-                <div style={{ fontSize: 12, color: C.textSec, marginBottom: 16 }}>Your latest trades</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {portfolioHoldings.map(a => {
-                    const gain = ((a.price - a.avgCost) / a.avgCost * 100).toFixed(1);
+              <div style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr", gap: 16 }}>
+                {/* LEFT: Treemap */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gridAutoRows: "minmax(80px, auto)", gap: 6, alignContent: "start" }}>
+                  {sorted.map((a, i) => {
+                    const val = a.shares * a.price;
+                    const isFirst = i === 0;
+                    const isSecond = i === 1;
+                    const span = isFirst ? { gridColumn: "span 2", gridRow: "span 2" } : isSecond ? { gridColumn: "span 1", gridRow: "span 2" } : {};
                     return (
-                      <div key={a.id} style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                        padding: "10px 14px", borderRadius: 14,
-                        background: "rgba(255,255,255,0.4)",
-                        border: "1px solid rgba(255,255,255,0.5)",
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <span style={{ fontSize: 16 }}>{a.emoji}</span>
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 600 }}>{a.name}</div>
-                            <div style={{ fontSize: 11, color: C.textMuted }}>Bought {a.shares} shares</div>
-                          </div>
+                      <div key={a.id} onClick={() => guardedClick(() => setSelectedArtist(a))} style={{
+                        ...span, background: treemapColors[i % treemapColors.length],
+                        backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+                        borderRadius: 16, padding: isFirst ? "22px 20px" : "14px 14px",
+                        border: "1px solid rgba(255,255,255,0.35)", boxShadow: "0 2px 12px rgba(0,0,0,0.03)",
+                        cursor: "pointer", transition: "all 0.2s",
+                        display: "flex", flexDirection: "column", justifyContent: "space-between", overflow: "hidden", position: "relative",
+                      }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.02)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,0,0,0.08)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.03)"; }}
+                      >
+                        <div>
+                          <div style={{ fontSize: isFirst ? 16 : 13, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 2, color: C.text }}>{a.name}</div>
+                          {isFirst && <div style={{ fontSize: 11, color: C.textSec, fontFamily: "monospace" }}>{a.genre}</div>}
                         </div>
-                        <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: 13, fontWeight: 600 }}>${(a.shares * a.price).toFixed(2)}</div>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: C.accentDark, fontFamily: "monospace" }}>+{gain}%</div>
+                        <div>
+                          <div style={{ fontSize: isFirst ? 28 : isSecond ? 22 : 16, fontWeight: 700, letterSpacing: "-0.02em", color: C.text }}>${val.toFixed(0)}</div>
+                          {(isFirst || isSecond) && <div style={{ fontSize: 11, color: C.textSec, marginTop: 2 }}>{a.shares} shares</div>}
                         </div>
                       </div>
                     );
                   })}
                 </div>
+                {/* RIGHT: Stats */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 4 }}>Portfolio Overview</div>
+                    <div style={{ fontSize: 12, color: C.textSec }}>Performance summary across {portfolioHoldings.length} holdings</div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
+                    {[
+                      { label: "Value", val: `$${totalValue.toFixed(0)}`, icon: "💰", sub: `+${totalPct}%` },
+                      { label: "Return", val: `+$${totalReturn.toFixed(0)}`, icon: "📈", sub: `+${totalPct}%` },
+                      { label: "Shares", val: totalShares.toString(), icon: "🎵", sub: `${portfolioHoldings.length} artists` },
+                      { label: "Avg Return", val: `${totalPct}%`, icon: "⚡", sub: "all time" },
+                    ].map(s => (
+                      <div key={s.label} style={{
+                        background: "rgba(255,255,255,0.55)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+                        borderRadius: 14, padding: "14px 12px", border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 1px 8px rgba(0,0,0,0.02)",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                          <span style={{ fontSize: 14 }}>{s.icon}</span>
+                          <span style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "monospace" }}>{s.label}</span>
+                        </div>
+                        <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 2 }}>{s.val}</div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: C.accentDark, fontFamily: "monospace" }}>▲ {s.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{
+                    background: "rgba(255,255,255,0.55)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+                    borderRadius: 18, padding: "20px 22px", border: "1px solid rgba(255,255,255,0.7)", boxShadow: "0 2px 16px rgba(0,0,0,0.03)",
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>Weekly Performance</div>
+                        <div style={{ fontSize: 12, color: C.textSec }}>Portfolio value · Last 7 days</div>
+                      </div>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 8, background: C.greenSoft, fontSize: 11, fontWeight: 600, fontFamily: "monospace", color: C.accentDark }}>▲ {totalPct}%</div>
+                    </div>
+                    <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 8 }}>${totalValue.toFixed(0)}</div>
+                    <svg width="100%" height="50" viewBox="0 0 300 50">
+                      <defs><linearGradient id="ptGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.accent} stopOpacity="0.25" /><stop offset="100%" stopColor={C.accent} stopOpacity="0.02" /></linearGradient></defs>
+                      <path d="M0,42 Q40,38 80,32 T160,22 T240,14 T300,8" fill="none" stroke={C.accentDark} strokeWidth="2" />
+                      <path d="M0,42 Q40,38 80,32 T160,22 T240,14 T300,8 L300,50 L0,50 Z" fill="url(#ptGrad)" />
+                    </svg>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: C.textMuted, fontFamily: "monospace", marginTop: 4 }}>
+                      <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
+                    </div>
+                  </div>
+                  <div style={{
+                    background: "rgba(255,255,255,0.55)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+                    borderRadius: 18, padding: "20px 22px", border: "1px solid rgba(255,255,255,0.7)", boxShadow: "0 2px 16px rgba(0,0,0,0.03)",
+                  }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 14, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>Holdings Detail</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {sorted.map(a => {
+                        const val = a.shares * a.price;
+                        const gain = ((a.price - a.avgCost) / a.avgCost * 100).toFixed(1);
+                        return (
+                          <div key={a.id} onClick={() => guardedClick(() => setSelectedArtist(a))} style={{
+                            display: "flex", alignItems: "center", justifyContent: "space-between",
+                            padding: "10px 12px", borderRadius: 12, cursor: "pointer",
+                            background: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.45)", transition: "all 0.15s",
+                          }}
+                            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.6)"; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.35)"; }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <span style={{ fontSize: 16 }}>{a.emoji}</span>
+                              <div>
+                                <div style={{ fontSize: 13, fontWeight: 600 }}>{a.name}</div>
+                                <div style={{ fontSize: 10, color: C.textMuted, fontFamily: "monospace" }}>{a.shares} shares · ${a.avgCost.toFixed(2)} avg</div>
+                              </div>
+                            </div>
+                            <div style={{ textAlign: "right" }}>
+                              <div style={{ fontSize: 13, fontWeight: 700 }}>${val.toFixed(0)}</div>
+                              <div style={{ fontSize: 10, fontWeight: 600, color: C.accentDark, fontFamily: "monospace" }}>+{gain}%</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ─── NEWS PAGE ─── */}
         {!showProfile && tab === "News" && (
@@ -1257,84 +1215,88 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
         </>)}
       </main>
       {/* Floating sign-up banner for non-authenticated users */}
-      {showAuthBanner && (
-        <div style={{
-          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
-          zIndex: 250,
-          background: "rgba(17,24,39,0.95)",
-          backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-          borderRadius: 16, padding: "16px 28px",
-          display: "flex", alignItems: "center", gap: 16,
-          boxShadow: "0 8px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08)",
-          animation: "slideUp 0.4s cubic-bezier(0.22,1,0.36,1)",
-          color: "#fff",
-          fontFamily: "'Inter', sans-serif",
-        }}>
-          <style>{`@keyframes slideUp { from { opacity:0; transform:translate(-50%,20px); } to { opacity:1; transform:translate(-50%,0); } }`}</style>
-          <span style={{ fontSize: 22 }}>🔒</span>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>Create a free account to invest</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Sign up to trade shares and build your portfolio</div>
-          </div>
-          <button
-            onClick={() => openAuth('signup')}
-            style={{
-              padding: "10px 24px", borderRadius: 10, border: "none",
-              fontSize: 13, fontWeight: 700, cursor: "pointer",
-              fontFamily: "'Inter', sans-serif",
-              background: `linear-gradient(135deg, ${C.primary}, #5B6AE8)`,
-              color: "#fff", whiteSpace: "nowrap",
-              boxShadow: `0 4px 16px ${C.primary}40`,
-            }}
-          >Sign Up Free</button>
-        </div>
-      )}
-
-      {/* Persistent bottom CTA bar for non-authenticated users */}
-      {!isLoggedIn && !showAuthBanner && (
-        <div style={{
-          position: "fixed", bottom: 0, left: 0, right: 0,
-          zIndex: 199,
-          background: "linear-gradient(0deg, rgba(234,240,250,1) 0%, rgba(234,240,250,0.95) 60%, rgba(234,240,250,0) 100%)",
-          padding: "60px 32px 24px",
-          display: "flex", justifyContent: "center",
-        }}>
+      {
+        showAuthBanner && (
           <div style={{
-            background: "rgba(17,24,39,0.92)",
+            position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
+            zIndex: 250,
+            background: "rgba(17,24,39,0.95)",
             backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-            borderRadius: 16, padding: "14px 28px",
+            borderRadius: 16, padding: "16px 28px",
             display: "flex", alignItems: "center", gap: 16,
-            boxShadow: "0 4px 24px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.06)",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08)",
+            animation: "slideUp 0.4s cubic-bezier(0.22,1,0.36,1)",
             color: "#fff",
             fontFamily: "'Inter', sans-serif",
           }}>
-            <span style={{ fontSize: 14, color: "rgba(255,255,255,0.7)" }}>
-              Viewing in <strong style={{ color: "#fff" }}>preview mode</strong> — sign up to start investing
-            </span>
+            <style>{`@keyframes slideUp { from { opacity:0; transform:translate(-50%,20px); } to { opacity:1; transform:translate(-50%,0); } }`}</style>
+            <span style={{ fontSize: 22 }}>🔒</span>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>Create a free account to invest</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Sign up to trade shares and build your portfolio</div>
+            </div>
             <button
               onClick={() => openAuth('signup')}
               style={{
-                padding: "8px 20px", borderRadius: 10, border: "none",
-                fontSize: 12, fontWeight: 700, cursor: "pointer",
+                padding: "10px 24px", borderRadius: 10, border: "none",
+                fontSize: 13, fontWeight: 700, cursor: "pointer",
                 fontFamily: "'Inter', sans-serif",
-                background: C.accent, color: "#0D1117",
-                whiteSpace: "nowrap",
+                background: `linear-gradient(135deg, ${C.primary}, #5B6AE8)`,
+                color: "#fff", whiteSpace: "nowrap",
+                boxShadow: `0 4px 16px ${C.primary}40`,
               }}
-            >Create Account</button>
-            <button
-              onClick={() => openAuth('login')}
-              style={{
-                padding: "8px 16px", borderRadius: 10,
-                border: "1px solid rgba(255,255,255,0.15)",
-                fontSize: 12, fontWeight: 600, cursor: "pointer",
-                fontFamily: "'Inter', sans-serif",
-                background: "transparent", color: "rgba(255,255,255,0.7)",
-                whiteSpace: "nowrap",
-              }}
-            >Log In</button>
+            >Sign Up Free</button>
           </div>
-        </div>
-      )}
+        )
+      }
+
+      {/* Persistent bottom CTA bar for non-authenticated users */}
+      {
+        !isLoggedIn && !showAuthBanner && (
+          <div style={{
+            position: "fixed", bottom: 0, left: 0, right: 0,
+            zIndex: 199,
+            background: "linear-gradient(0deg, rgba(234,240,250,1) 0%, rgba(234,240,250,0.95) 60%, rgba(234,240,250,0) 100%)",
+            padding: "60px 32px 24px",
+            display: "flex", justifyContent: "center",
+          }}>
+            <div style={{
+              background: "rgba(17,24,39,0.92)",
+              backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+              borderRadius: 16, padding: "14px 28px",
+              display: "flex", alignItems: "center", gap: 16,
+              boxShadow: "0 4px 24px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.06)",
+              color: "#fff",
+              fontFamily: "'Inter', sans-serif",
+            }}>
+              <span style={{ fontSize: 14, color: "rgba(255,255,255,0.7)" }}>
+                Viewing in <strong style={{ color: "#fff" }}>preview mode</strong> — sign up to start investing
+              </span>
+              <button
+                onClick={() => openAuth('signup')}
+                style={{
+                  padding: "8px 20px", borderRadius: 10, border: "none",
+                  fontSize: 12, fontWeight: 700, cursor: "pointer",
+                  fontFamily: "'Inter', sans-serif",
+                  background: C.accent, color: "#0D1117",
+                  whiteSpace: "nowrap",
+                }}
+              >Create Account</button>
+              <button
+                onClick={() => openAuth('login')}
+                style={{
+                  padding: "8px 16px", borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  fontSize: 12, fontWeight: 600, cursor: "pointer",
+                  fontFamily: "'Inter', sans-serif",
+                  background: "transparent", color: "rgba(255,255,255,0.7)",
+                  whiteSpace: "nowrap",
+                }}
+              >Log In</button>
+            </div>
+          </div>
+        )
+      }
 
       {/* Artist Detail Modal */}
       <ArtistDetailModal
@@ -1343,6 +1305,6 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
         allNews={news}
         trendingSounds={trendingSounds}
       />
-    </div>
+    </div >
   );
 }
