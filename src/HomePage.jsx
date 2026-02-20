@@ -379,7 +379,7 @@ export default function HomePage({ navigate, scrollTo, isLoggedIn, openAuth, use
                 display: "flex", flexDirection: "column",
                 justifyContent: "center", alignItems: "center",
                 overflow: "hidden",
-                padding: "0 40px",
+                paddingLeft: 40, paddingRight: 40,
                 zIndex: 1,
             }}>
                 {/* Giant background text — parallax */}

@@ -182,6 +182,8 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
   const [loaded, setLoaded] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState(null);
   const [showAuthBanner, setShowAuthBanner] = useState(false);
+  const [marketSearch, setMarketSearch] = useState("");
+  const [genreFilter, setGenreFilter] = useState("All");
 
   // Guarded click: open auth modal instead of action when not logged in
   const guardedClick = (fn) => {
@@ -368,53 +370,208 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
         )}
 
         {/* ─── MARKETS PAGE ─── */}
-        {!showProfile && tab === "Markets" && (
-          <div style={fadeIn(0.1)}>
-            <div style={{ marginBottom: 24 }}>
-              <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 4 }}>Markets</h1>
-              <p style={{ fontSize: 14, color: C.textSec }}>Explore all artist shares and market data</p>
-            </div>
-            <Card style={{ padding: 24, marginBottom: 20 }} hover>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>All Artists</h2>
+        {!showProfile && tab === "Markets" && (() => {
+          const genres = ["All", ...new Set(artists.map(a => a.genre))];
+          const filtered = artists.filter(a => {
+            const matchesSearch = a.name.toLowerCase().includes(marketSearch.toLowerCase());
+            const matchesGenre = genreFilter === "All" || a.genre === genreFilter;
+            return matchesSearch && matchesGenre;
+          });
+          const totalMarketCap = artists.reduce((s, a) => s + a.price * 100000, 0);
+          const totalVolume = artists.reduce((s, a) => s + parseFloat(a.volume) * 1000, 0);
+          const avgChange = (artists.reduce((s, a) => s + a.change, 0) / artists.length).toFixed(1);
+
+          return (
+            <div style={fadeIn(0.1)}>
+              <div style={{ marginBottom: 24 }}>
+                <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 4 }}>Markets</h1>
+                <p style={{ fontSize: 14, color: C.textSec }}>Explore all artist shares and market data</p>
+              </div>
+
+              {/* ── Summary Stat Cards ── */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 20 }}>
+                {[
+                  {
+                    label: "Total Market Cap", value: `$${(totalMarketCap / 1000000).toFixed(1)}M`,
+                    sub: `${artists.length} listed artists`,
+                    gradient: `linear-gradient(135deg, ${C.primary}18, ${C.accent}15)`,
+                    accent: C.primary, icon: "📊",
+                  },
+                  {
+                    label: "24H Volume", value: `$${(totalVolume / 1000).toFixed(0)}K`,
+                    sub: `${avgChange > 0 ? "+" : ""}${avgChange}% avg change`,
+                    gradient: `linear-gradient(135deg, ${C.accent}20, ${C.green}15)`,
+                    accent: C.accentDark, icon: "⚡",
+                  },
+                  {
+                    label: "Active Traders", value: "12.4K",
+                    sub: "+18% this week",
+                    gradient: `linear-gradient(135deg, ${C.primary}12, rgba(91,106,232,0.12))`,
+                    accent: "#5B6AE8", icon: "👥",
+                  },
+                ].map(s => (
+                  <div key={s.label} style={{
+                    background: s.gradient,
+                    backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+                    borderRadius: 20, padding: "22px 24px",
+                    border: "1px solid rgba(255,255,255,0.6)",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.6)",
+                    position: "relative", overflow: "hidden",
+                  }}>
+                    <div style={{
+                      position: "absolute", top: -20, right: -20, width: 80, height: 80,
+                      borderRadius: "50%", background: `${s.accent}10`,
+                      filter: "blur(20px)", pointerEvents: "none",
+                    }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                      <div style={{
+                        fontSize: 11, fontWeight: 600, color: C.textMuted,
+                        textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace",
+                      }}>{s.label}</div>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 12,
+                        background: "rgba(255,255,255,0.6)",
+                        border: "1px solid rgba(255,255,255,0.8)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 16,
+                      }}>{s.icon}</div>
+                    </div>
+                    <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", color: C.text, marginBottom: 4 }}>{s.value}</div>
+                    <div style={{ fontSize: 12, color: C.textSec }}>{s.sub}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Search & Filter Bar ── */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 10, marginBottom: 16,
+                background: "rgba(255,255,255,0.5)",
+                backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+                borderRadius: 16, padding: "10px 16px",
+                border: "1px solid rgba(255,255,255,0.7)",
+                boxShadow: "0 2px 16px rgba(0,0,0,0.03)",
+              }}>
+                <span style={{ fontSize: 16, color: C.textMuted }}>🔍</span>
+                <input
+                  type="text"
+                  placeholder="Search artists..."
+                  value={marketSearch}
+                  onChange={e => setMarketSearch(e.target.value)}
+                  style={{
+                    flex: 1, border: "none", background: "transparent", outline: "none",
+                    fontSize: 13, fontWeight: 500, color: C.text,
+                    fontFamily: "'Inter', sans-serif",
+                  }}
+                />
+                <div style={{ width: 1, height: 20, background: "rgba(0,0,0,0.08)", margin: "0 4px" }} />
+                {genres.map(g => (
+                  <button key={g} onClick={() => setGenreFilter(g)} style={{
+                    padding: "6px 14px", borderRadius: 10, border: "none",
+                    fontSize: 11, fontWeight: 600, cursor: "pointer",
+                    fontFamily: "monospace", letterSpacing: "0.04em",
+                    background: genreFilter === g
+                      ? `linear-gradient(135deg, ${C.primary}, #5B6AE8)`
+                      : "rgba(255,255,255,0.5)",
+                    color: genreFilter === g ? "#fff" : C.textSec,
+                    boxShadow: genreFilter === g ? `0 2px 10px ${C.primary}30` : "none",
+                    transition: "all 0.2s",
+                    whiteSpace: "nowrap",
+                  }}>
+                    {g}
+                  </button>
+                ))}
+                <div style={{ width: 1, height: 20, background: "rgba(0,0,0,0.08)", margin: "0 4px" }} />
                 <TabPill options={["Daily", "Weekly", "Monthly"]} active={marketPeriod} onChange={setMarketPeriod} />
               </div>
+
+              {/* ── Table Header ── */}
               <div style={{
-                display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 70px",
-                padding: "0 0 10px 0", borderBottom: "1px solid rgba(0,0,0,0.05)",
-                fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace",
+                display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 80px",
+                padding: "0 20px 10px",
+                fontSize: 10, fontWeight: 600, color: C.textMuted,
+                textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "monospace",
               }}>
-                <span>Artist</span><span>Price</span><span>Change</span><span>Volume</span><span>Streams</span><span></span>
+                <span>Artist</span><span>Price</span><span>Change</span>
+                <span>Volume</span><span>Streams</span><span></span>
               </div>
-              {artists.map((a, i) => (
-                <div key={a.id} onClick={() => guardedClick(() => setSelectedArtist(a))} style={{
-                  display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 70px",
-                  alignItems: "center", padding: "14px 0",
-                  borderBottom: i < artists.length - 1 ? "1px solid rgba(0,0,0,0.04)" : "none",
-                  cursor: "pointer", transition: "background 0.15s", borderRadius: 8,
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+
+              {/* ── Table Rows ── */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {filtered.map((a) => (
+                  <div key={a.id} onClick={() => guardedClick(() => setSelectedArtist(a))} style={{
+                    display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 80px",
+                    alignItems: "center", padding: "14px 20px",
+                    background: "rgba(255,255,255,0.55)",
+                    backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+                    borderRadius: 16,
+                    border: "1px solid rgba(255,255,255,0.7)",
+                    boxShadow: "0 1px 8px rgba(0,0,0,0.02)",
+                    cursor: "pointer", transition: "all 0.2s ease",
+                  }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.85)";
+                      e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.06)";
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.55)";
+                      e.currentTarget.style.boxShadow = "0 1px 8px rgba(0,0,0,0.02)";
+                      e.currentTarget.style.transform = "translateY(0)";
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{
+                        width: 42, height: 42, borderRadius: 14,
+                        background: `linear-gradient(135deg, ${C.primary}10, ${C.accent}10)`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 18, border: "1px solid rgba(255,255,255,0.6)",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
+                      }}>{a.emoji}</div>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: "-0.01em" }}>{a.name}</div>
+                        <div style={{ fontSize: 11, color: C.textMuted }}>{a.genre}</div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.02em" }}>${a.price.toFixed(2)}</div>
                     <div style={{
-                      width: 40, height: 40, borderRadius: 12,
-                      background: "rgba(0,0,0,0.03)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 18, border: "1px solid rgba(0,0,0,0.04)",
-                    }}>{a.emoji}</div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 600 }}>{a.name}</div>
-                      <div style={{ fontSize: 11, color: C.textMuted }}>{a.genre}</div>
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                      padding: "4px 10px", borderRadius: 8,
+                      background: a.change >= 0 ? C.greenSoft : C.redSoft,
+                      fontSize: 12, fontWeight: 600, fontFamily: "monospace",
+                      color: a.change >= 0 ? C.accentDark : C.red,
+                      width: "fit-content",
+                    }}>
+                      {a.change >= 0 ? "▲" : "▼"} {Math.abs(a.change)}%
+                    </div>
+                    <div style={{ fontSize: 13, color: C.textSec, fontWeight: 500 }}>{a.volume}</div>
+                    <div style={{ fontSize: 13, color: C.textSec, fontWeight: 500 }}>{a.streams}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <SparkLine positive={a.change >= 0} />
+                      <button
+                        onClick={e => { e.stopPropagation(); guardedClick(() => setSelectedArtist(a)); }}
+                        style={{
+                          width: 30, height: 30, borderRadius: 10,
+                          background: `linear-gradient(135deg, ${C.primary}, #5B6AE8)`,
+                          border: "none", color: "#fff", fontSize: 14,
+                          cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                          boxShadow: `0 2px 8px ${C.primary}30`,
+                          transition: "all 0.2s",
+                        }}
+                      >→</button>
                     </div>
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 600 }}>${a.price.toFixed(2)}</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: a.change >= 0 ? C.green : C.red }}>{a.change >= 0 ? "+" : ""}{a.change}%</div>
-                  <div style={{ fontSize: 13, color: C.textSec }}>{a.volume}</div>
-                  <div style={{ fontSize: 13, color: C.textSec }}>{a.streams}</div>
-                  <SparkLine positive={a.change >= 0} />
-                </div>
-              ))}
-            </Card>
-          </div>
-        )}
+                ))}
+              </div>
+
+              {filtered.length === 0 && (
+                <div style={{
+                  textAlign: "center", padding: "40px 0",
+                  color: C.textMuted, fontSize: 14,
+                }}>No artists match your search</div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ─── PORTFOLIO PAGE ─── */}
         {!showProfile && tab === "Portfolio" && (
