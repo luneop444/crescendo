@@ -580,49 +580,176 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
               <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 4 }}>Portfolio</h1>
               <p style={{ fontSize: 14, color: C.textSec }}>Your holdings and investment performance</p>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 20 }}>
-              {[{ label: "Total Value", val: `$${totalValue.toFixed(2)}`, color: C.primary }, { label: "Total Return", val: `+$${totalReturn.toFixed(2)}`, color: C.green }, { label: "Return %", val: `+${totalPct}%`, color: C.accentDark }].map(s => (
-                <Card key={s.label} style={{ padding: 24 }} hover>
-                  <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
-                  <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", color: s.color }}>{s.val}</div>
-                </Card>
+
+            {/* ── Overview Stat Cards ── */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 14, marginBottom: 20 }}>
+              {[
+                { label: "Total Value", value: `$${totalValue.toFixed(2)}`, icon: "💰", gradient: `linear-gradient(135deg, ${C.primary}18, ${C.accent}12)`, accent: C.primary },
+                { label: "Total Return", value: `+$${totalReturn.toFixed(2)}`, icon: "📈", gradient: `linear-gradient(135deg, ${C.accent}20, ${C.green}15)`, accent: C.accentDark },
+                { label: "Return %", value: `+${totalPct}%`, icon: "⚡", gradient: `linear-gradient(135deg, ${C.green}18, ${C.accent}10)`, accent: C.green },
+                { label: "Total Shares", value: portfolioHoldings.reduce((s, a) => s + a.shares, 0).toString(), icon: "🎵", gradient: `linear-gradient(135deg, ${C.primary}12, rgba(91,106,232,0.12))`, accent: "#5B6AE8" },
+              ].map(s => (
+                <div key={s.label} style={{
+                  background: s.gradient,
+                  backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+                  borderRadius: 20, padding: "20px 22px",
+                  border: "1px solid rgba(255,255,255,0.6)",
+                  boxShadow: "0 4px 24px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.6)",
+                  position: "relative", overflow: "hidden",
+                }}>
+                  <div style={{
+                    position: "absolute", top: -20, right: -20, width: 70, height: 70,
+                    borderRadius: "50%", background: `${s.accent}10`,
+                    filter: "blur(18px)", pointerEvents: "none",
+                  }} />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                    <div style={{
+                      fontSize: 10, fontWeight: 600, color: C.textMuted,
+                      textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace",
+                    }}>{s.label}</div>
+                    <span style={{ fontSize: 18 }}>{s.icon}</span>
+                  </div>
+                  <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.03em", color: C.text }}>{s.value}</div>
+                </div>
               ))}
             </div>
-            <Card style={{ padding: 24 }} hover>
-              <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 16 }}>Your Holdings</h2>
+
+            {/* ── Holdings Treemap Grid ── */}
+            <div style={{ marginBottom: 20 }}>
               <div style={{
-                display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr",
-                padding: "0 0 10px 0", borderBottom: "1px solid rgba(0,0,0,0.05)",
-                fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace",
-              }}>
-                <span>Artist</span><span>Shares</span><span>Avg Cost</span><span>Value</span><span>Return</span>
-              </div>
-              {portfolioHoldings.map((a, i) => {
-                const val = a.shares * a.price;
-                const gain = (a.price - a.avgCost) * a.shares;
-                const pct = ((a.price - a.avgCost) / a.avgCost * 100).toFixed(1);
-                return (
-                  <div key={a.id} onClick={() => guardedClick(() => setSelectedArtist(a))} style={{
-                    display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr",
-                    alignItems: "center", padding: "14px 0",
-                    borderBottom: i < portfolioHoldings.length - 1 ? "1px solid rgba(0,0,0,0.04)" : "none",
-                    cursor: "pointer", transition: "background 0.15s", borderRadius: 8,
-                  }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ fontSize: 18 }}>{a.emoji}</span>
+                fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 10,
+                textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace",
+              }}>Holdings Allocation</div>
+              <div style={{ display: "grid", gridTemplateColumns: `repeat(${portfolioHoldings.length}, 1fr)`, gap: 8 }}>
+                {portfolioHoldings.map((a) => {
+                  const val = a.shares * a.price;
+                  const pct = (val / totalValue * 100).toFixed(0);
+                  const gain = ((a.price - a.avgCost) / a.avgCost * 100).toFixed(1);
+                  const colors = [
+                    { bg: `linear-gradient(135deg, ${C.accent}40, ${C.green}25)`, border: `${C.accent}50` },
+                    { bg: `linear-gradient(135deg, ${C.primary}30, #5B6AE830)`, border: `${C.primary}40` },
+                    { bg: `linear-gradient(135deg, ${C.accent}25, ${C.accentDark}20)`, border: `${C.accent}35` },
+                  ];
+                  const ci = portfolioHoldings.indexOf(a) % colors.length;
+                  return (
+                    <div key={a.id} onClick={() => guardedClick(() => setSelectedArtist(a))} style={{
+                      background: colors[ci].bg,
+                      backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+                      borderRadius: 18, padding: "20px 18px",
+                      border: `1px solid ${colors[ci].border}`,
+                      boxShadow: "0 2px 16px rgba(0,0,0,0.03)",
+                      cursor: "pointer", transition: "all 0.2s",
+                      minHeight: 120, display: "flex", flexDirection: "column", justifyContent: "space-between",
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,0,0,0.08)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 16px rgba(0,0,0,0.03)"; }}
+                    >
                       <div>
-                        <div style={{ fontSize: 14, fontWeight: 600 }}>{a.name}</div>
-                        <div style={{ fontSize: 11, color: C.textMuted }}>{a.genre}</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <span style={{ fontSize: 20 }}>{a.emoji}</span>
+                          <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.02em" }}>{a.name}</div>
+                        </div>
+                        <div style={{ fontSize: 11, color: C.textSec, fontFamily: "monospace", marginBottom: 4 }}>{a.genre}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 2 }}>${val.toFixed(0)}</div>
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <span style={{
+                            fontSize: 11, fontWeight: 600, fontFamily: "monospace",
+                            padding: "2px 8px", borderRadius: 6,
+                            background: "rgba(255,255,255,0.4)",
+                            color: C.accentDark,
+                          }}>▲ {gain}%</span>
+                          <span style={{ fontSize: 11, color: C.textMuted }}>{pct}% of portfolio</span>
+                        </div>
                       </div>
                     </div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>{a.shares}</div>
-                    <div style={{ fontSize: 14, color: C.textSec }}>${a.avgCost.toFixed(2)}</div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>${val.toFixed(2)}</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: C.green }}>+${gain.toFixed(2)} ({pct}%)</div>
-                  </div>
-                );
-              })}
-            </Card>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── Bottom Section: Performance + Holdings Detail ── */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 }}>
+
+              {/* Performance Card */}
+              <div style={{
+                background: "rgba(255,255,255,0.55)",
+                backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+                borderRadius: 20, padding: "22px 24px",
+                border: "1px solid rgba(255,255,255,0.7)",
+                boxShadow: "0 2px 16px rgba(0,0,0,0.03)",
+              }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4,
+                  textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace",
+                }}>Weekly Performance</div>
+                <div style={{ fontSize: 12, color: C.textSec, marginBottom: 16 }}>Portfolio value · Last 7 days</div>
+                <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 4 }}>
+                  ${totalValue.toFixed(0)}
+                </div>
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  padding: "4px 10px", borderRadius: 8, background: C.greenSoft,
+                  fontSize: 12, fontWeight: 600, fontFamily: "monospace", color: C.accentDark,
+                  marginBottom: 16,
+                }}>▲ {totalPct}%</div>
+                {/* Mini chart */}
+                <svg width="100%" height="60" viewBox="0 0 300 60">
+                  <defs>
+                    <linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={C.accent} stopOpacity="0.3" />
+                      <stop offset="100%" stopColor={C.accent} stopOpacity="0.02" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M0,50 Q50,45 75,38 T150,28 T225,18 T300,10" fill="none" stroke={C.accentDark} strokeWidth="2" />
+                  <path d="M0,50 Q50,45 75,38 T150,28 T225,18 T300,10 L300,60 L0,60 Z" fill="url(#perfGrad)" />
+                </svg>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.textMuted, fontFamily: "monospace", marginTop: 4 }}>
+                  <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
+                </div>
+              </div>
+
+              {/* Recent Activity Card */}
+              <div style={{
+                background: "rgba(255,255,255,0.55)",
+                backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+                borderRadius: 20, padding: "22px 24px",
+                border: "1px solid rgba(255,255,255,0.7)",
+                boxShadow: "0 2px 16px rgba(0,0,0,0.03)",
+              }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4,
+                  textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace",
+                }}>Recent Activity</div>
+                <div style={{ fontSize: 12, color: C.textSec, marginBottom: 16 }}>Your latest trades</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {portfolioHoldings.map(a => {
+                    const gain = ((a.price - a.avgCost) / a.avgCost * 100).toFixed(1);
+                    return (
+                      <div key={a.id} style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        padding: "10px 14px", borderRadius: 14,
+                        background: "rgba(255,255,255,0.4)",
+                        border: "1px solid rgba(255,255,255,0.5)",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <span style={{ fontSize: 16 }}>{a.emoji}</span>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600 }}>{a.name}</div>
+                            <div style={{ fontSize: 11, color: C.textMuted }}>Bought {a.shares} shares</div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: 13, fontWeight: 600 }}>${(a.shares * a.price).toFixed(2)}</div>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: C.accentDark, fontFamily: "monospace" }}>+{gain}%</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
