@@ -1207,336 +1207,354 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
         {!showProfile && tab === "Portfolio" && (() => {
           const sorted = [...portfolioHoldings].sort((a, b) => (b.shares * b.price) - (a.shares * a.price));
           const avatarColors = ["#4338CA", "#36D7B7", "#5B6AE8", "#50E3C2", "#8B5CF6", "#F59E0B"];
-
-          // Build chart data points from portfolioHistory
           const chartData = portfolioHistory;
           const chartMax = Math.max(...chartData.map(d => d.v));
           const chartMin = Math.min(...chartData.map(d => d.v));
-
-          // Allocation data for spending overview
           const allocations = sorted.map((a, i) => ({
             name: a.name, emoji: a.emoji, value: a.shares * a.price,
             color: avatarColors[i % avatarColors.length],
             pct: ((a.shares * a.price) / totalValue * 100).toFixed(1),
           }));
-
-          // Mock recent transfers
           const transfers = [
-            { type: "buy", artist: sorted[0]?.name || "—", amount: 50, time: "2h ago", emoji: sorted[0]?.emoji || "🎵" },
-            { type: "sell", artist: sorted[1]?.name || "—", amount: 25, time: "1d ago", emoji: sorted[1]?.emoji || "🎵" },
-            { type: "buy", artist: sorted[2]?.name || "—", amount: 75, time: "3d ago", emoji: sorted[2]?.emoji || "🎵" },
-            { type: "dividend", artist: "All Artists", amount: 14.5, time: "5d ago", emoji: "💰" },
+            { type: "sell", label: "Sold shares", artist: sorted[1]?.name || "—", amount: 159, addr: "To BGPPCE...LCwmH", time: "2h ago" },
+            { type: "buy", label: "Bought shares", artist: sorted[0]?.name || "—", amount: 250, addr: "From main wallet", time: "5h ago" },
+            { type: "dividend", label: "Dividend payout", artist: "All Artists", amount: 14.5, addr: "Portfolio yield", time: "1d ago" },
           ];
-
-          // Hover display value
           const displayValue = portHoverIdx !== null ? chartData[portHoverIdx].v : totalValue;
-          const displayDate = portHoverIdx !== null ? chartData[portHoverIdx].d : "Today";
-          const displayChange = portHoverIdx !== null
-            ? (chartData[portHoverIdx].v - chartData[0].v)
-            : totalReturn;
-          const displayPct = portHoverIdx !== null
-            ? (((chartData[portHoverIdx].v - chartData[0].v) / chartData[0].v) * 100).toFixed(2)
-            : totalPct;
-          const isPositive = displayChange >= 0;
+          const displayDate = portHoverIdx !== null ? chartData[portHoverIdx].d : null;
+          const isPositive = (portHoverIdx !== null ? chartData[portHoverIdx].v - chartData[0].v : totalReturn) >= 0;
+
+          // OHLC candle data (deterministic)
+          const candles = chartData.map((d, i) => {
+            const prev = i > 0 ? chartData[i - 1].v : d.v;
+            const open = prev;
+            const close = d.v;
+            const n1 = Math.sin(i * 2.3 + 7) * 0.03 + 0.02;
+            const n2 = Math.cos(i * 1.7 + 3) * 0.03 + 0.02;
+            return { open, close, high: Math.max(open, close) * (1 + n1), low: Math.min(open, close) * (1 - n2) };
+          });
+
+          // X-axis month labels
+          const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
           return (
             <div style={fadeIn(0.1)}>
-              {/* ── Title + Ticker Row ── */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", margin: 0, color: C.text }}>My Portfolio</h1>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+
+              {/* ═══ ROW 1: Title + Ticker Strip ═══ */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                <h1 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-0.04em", margin: 0, color: C.text }}>My Portfolio</h1>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {sorted.slice(0, 3).map(a => (
                     <div key={a.id} style={{
                       display: "flex", alignItems: "center", gap: 6,
-                      padding: "4px 10px", borderRadius: 8,
-                      background: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.6)",
-                      fontSize: 11, fontWeight: 600, fontFamily: "monospace",
+                      padding: "6px 12px", borderRadius: 10,
+                      background: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.6)",
+                      backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+                      fontSize: 12, fontWeight: 600,
                     }}>
-                      <span style={{ fontSize: 12 }}>{a.emoji}</span>
-                      <span style={{ color: C.text }}>{a.name}</span>
-                      <span style={{ color: a.change >= 0 ? C.green : C.red }}>{a.change >= 0 ? "+" : ""}{a.change}%</span>
+                      <span>{a.emoji}</span>
+                      <span style={{ color: C.text, fontWeight: 700 }}>{a.name}</span>
+                      <span style={{ fontFamily: "monospace", fontWeight: 700, fontSize: 11 }}>${a.price.toFixed(2)}</span>
+                      <span style={{
+                        fontFamily: "monospace", fontWeight: 700, fontSize: 11,
+                        color: a.change >= 0 ? C.green : C.red,
+                        padding: "1px 6px", borderRadius: 4,
+                        background: a.change >= 0 ? `${C.green}12` : `${C.red}12`,
+                      }}>{a.change >= 0 ? "+" : ""}{a.change}%</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* ── Top Row: Portfolio Cards + Arc Gauge ── */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr", gap: 16, marginBottom: 20 }}>
-                {/* Portfolio Card 1 */}
+              {/* ═══ ROW 2: Portfolio Cards + Arc Gauge ═══ */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.3fr", gap: 16, marginBottom: 20 }}>
+                {/* Card: Music Portfolio */}
                 <div style={{
                   background: "rgba(255,255,255,0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-                  borderRadius: 20, padding: "20px 22px",
+                  borderRadius: 20, padding: "22px 24px",
                   border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-                  display: "flex", flexDirection: "column", gap: 12,
                 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>Music Portfolio</div>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.accent }} />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Music Portfolio</div>
+                    <div style={{ fontSize: 11, color: C.textMuted }}>/</div>
                   </div>
-                  <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.03em", color: C.text }}>${totalValue.toFixed(2)}</div>
-                  <MiniChart data={graphWeek} color={C.accent} h={50} interactive showCandles={portChartMode === "candle"} />
-                  <div style={{ fontSize: 11, color: isPositive ? C.green : C.red, fontWeight: 600, fontFamily: "monospace" }}>
-                    {isPositive ? "+" : ""}{totalPct}% all time
-                  </div>
-                </div>
-
-                {/* Portfolio Card 2 */}
-                <div style={{
-                  background: "rgba(255,255,255,0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-                  borderRadius: 20, padding: "20px 22px",
-                  border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-                  display: "flex", flexDirection: "column", gap: 12,
-                }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>Watchlist</div>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.primary }} />
-                  </div>
-                  <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.03em", color: C.text }}>{watchlist.length} artists</div>
-                  <MiniChart data={[18,22,19,25,23,28,26,30]} color={C.primary} h={50} interactive showCandles={portChartMode === "candle"} />
-                  <div style={{ fontSize: 11, color: C.textSec, fontWeight: 600, fontFamily: "monospace" }}>
-                    tracking {artists.length} total
-                  </div>
-                </div>
-
-                {/* Arc Gauge — Total Portfolio */}
-                <div style={{
-                  background: "rgba(17,24,39,0.95)", borderRadius: 24, padding: "24px",
-                  border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 8px 40px rgba(0,0,0,0.2)",
-                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                  position: "relative", overflow: "hidden",
-                }}>
-                  <div style={{ position: "absolute", top: -40, right: -40, width: 140, height: 140, borderRadius: "50%", background: `${C.accent}12`, filter: "blur(40px)", pointerEvents: "none" }} />
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "monospace", marginBottom: 12 }}>Total portfolio value</div>
-                  {/* SVG Arc */}
-                  <svg width="160" height="90" viewBox="0 0 160 90">
-                    <path d="M 15 85 A 65 65 0 0 1 145 85" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" strokeLinecap="round" />
-                    <path d="M 15 85 A 65 65 0 0 1 145 85" fill="none" stroke={`url(#arcGrad)`} strokeWidth="8" strokeLinecap="round"
-                      strokeDasharray={`${Math.min((totalValue / 2500) * 204, 204)} 204`} />
+                  <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em", color: C.text, marginBottom: 12 }}>${totalValue.toFixed(2)}</div>
+                  {/* Wavy colored chart thumbnail */}
+                  <svg viewBox="0 0 120 40" style={{ width: "100%", height: 40, display: "block" }}>
                     <defs>
-                      <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="0">
+                      <linearGradient id="wavyFill1" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={C.accent} stopOpacity={0.4} />
+                        <stop offset="100%" stopColor={C.primary} stopOpacity={0.1} />
+                      </linearGradient>
+                    </defs>
+                    <path d="M0,35 C10,28 20,15 35,20 C50,25 55,10 70,12 C85,14 95,8 110,15 L120,18 L120,40 L0,40 Z" fill="url(#wavyFill1)" />
+                    <path d="M0,35 C10,28 20,15 35,20 C50,25 55,10 70,12 C85,14 95,8 110,15 L120,18" fill="none" stroke={C.accent} strokeWidth="2" />
+                  </svg>
+                </div>
+
+                {/* Card: Watchlist */}
+                <div style={{
+                  background: "rgba(255,255,255,0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+                  borderRadius: 20, padding: "22px 24px",
+                  border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Watchlist</div>
+                    <div style={{ fontSize: 11, color: C.textMuted }}>/</div>
+                  </div>
+                  <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em", color: C.text, marginBottom: 12 }}>${(totalCost).toFixed(2)}</div>
+                  <svg viewBox="0 0 120 40" style={{ width: "100%", height: 40, display: "block" }}>
+                    <defs>
+                      <linearGradient id="wavyFill2" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor={C.primary} stopOpacity={0.1} />
+                      </linearGradient>
+                    </defs>
+                    <path d="M0,30 C15,22 25,32 40,25 C55,18 65,28 80,20 C95,12 105,22 120,16 L120,40 L0,40 Z" fill="url(#wavyFill2)" />
+                    <path d="M0,30 C15,22 25,32 40,25 C55,18 65,28 80,20 C95,12 105,22 120,16" fill="none" stroke="#F59E0B" strokeWidth="2" />
+                  </svg>
+                </div>
+
+                {/* Arc Gauge */}
+                <div style={{
+                  background: "rgba(255,255,255,0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+                  borderRadius: 20, padding: "24px",
+                  border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                }}>
+                  <svg width="180" height="100" viewBox="0 0 180 100">
+                    <defs>
+                      <linearGradient id="arcGrad2" x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0%" stopColor={C.primary} />
                         <stop offset="50%" stopColor={C.accent} />
                         <stop offset="100%" stopColor={C.green} />
                       </linearGradient>
                     </defs>
+                    {/* Track */}
+                    <path d="M 15 90 A 75 75 0 0 1 165 90" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="3" strokeLinecap="round" />
+                    {/* Fill */}
+                    <path d="M 15 90 A 75 75 0 0 1 165 90" fill="none" stroke="url(#arcGrad2)" strokeWidth="3" strokeLinecap="round"
+                      strokeDasharray={`${Math.min((totalValue / 2500) * 236, 236)} 236`} />
+                    {/* End dots */}
+                    <circle cx="15" cy="90" r="4" fill={C.primary} />
+                    <circle cx="165" cy="90" r="4" fill="rgba(0,0,0,0.1)" />
+                    {/* Progress dot */}
+                    {(() => {
+                      const pct = Math.min(totalValue / 2500, 1);
+                      const angle = Math.PI + pct * Math.PI;
+                      const dx = 90 + 75 * Math.cos(angle);
+                      const dy = 90 + 75 * Math.sin(angle);
+                      return <circle cx={dx} cy={dy} r="5" fill={C.accent} stroke="#fff" strokeWidth="2" />;
+                    })()}
                   </svg>
-                  <div style={{ fontSize: 26, fontWeight: 700, color: "#fff", letterSpacing: "-0.03em", marginTop: -8 }}>${totalValue.toFixed(0)}</div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 4, marginBottom: 12 }}>of $2,500 goal</div>
+                  <div style={{ fontSize: 10, color: C.textMuted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace", marginTop: -4, marginBottom: 4 }}>Total portfolio value</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", color: C.text }}>${totalValue.toFixed(2)}</div>
                   <button style={{
-                    padding: "6px 20px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)",
-                    background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", fontSize: 11,
-                    fontWeight: 600, cursor: "pointer", fontFamily: "'Inter', sans-serif",
+                    marginTop: 10, padding: "6px 20px", borderRadius: 8,
+                    border: "1px solid rgba(0,0,0,0.08)", background: "rgba(0,0,0,0.03)",
+                    color: C.text, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                    fontFamily: "'Inter', sans-serif", display: "flex", alignItems: "center", gap: 4,
                   }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "#fff"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
-                  >View</button>
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.06)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0.03)"; }}
+                  >View <span style={{ fontSize: 12 }}>↗</span></button>
                 </div>
               </div>
 
-              {/* ── Middle Row: Graph + Stats ── */}
+              {/* ═══ ROW 3: Graph Card + AI/Stats Card ═══ */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 16, marginBottom: 20 }}>
 
-                {/* ── Main Chart Card ── */}
+                {/* ── GRAPH CARD (exact CashPanel style) ── */}
                 <div style={{
                   background: "rgba(255,255,255,0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-                  borderRadius: 24, padding: "28px",
-                  border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 4px 24px rgba(0,0,0,0.03)",
+                  borderRadius: 20, padding: "24px 28px",
+                  border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+                  display: "flex", flexDirection: "column",
                 }}>
-                  {/* Chart header with reactive value */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace", marginBottom: 6 }}>Graph</div>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-                        <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", color: C.text }}>${displayValue.toFixed(2)}</span>
-                        <span style={{ fontSize: 12, fontWeight: 600, fontFamily: "monospace", color: isPositive ? C.green : C.red }}>
-                          {isPositive ? "+" : ""}{displayChange.toFixed(2)} ({isPositive ? "+" : ""}{displayPct}%)
-                        </span>
-                      </div>
-                      <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{displayDate}</div>
+                  {/* Header row */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 16 }}>📊</span>
+                      <span style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Graph</span>
                     </div>
-                    {/* Chart type toggle */}
-                    <div style={{ display: "flex", gap: 4 }}>
-                      {[
-                        { key: "line", icon: "📈" },
-                        { key: "candle", icon: "📊" },
-                      ].map(m => (
-                        <button key={m.key} onClick={() => setPortChartMode(m.key)} style={{
-                          width: 32, height: 32, borderRadius: 8, border: "none",
-                          background: portChartMode === m.key ? `${C.primary}15` : "rgba(0,0,0,0.03)",
-                          fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                          transition: "all 0.15s",
-                        }}>{m.icon}</button>
-                      ))}
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(0,0,0,0.04)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, cursor: "pointer" }}>😊</div>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(0,0,0,0.04)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, cursor: "pointer" }}>⤢</div>
                     </div>
                   </div>
 
-                  {/* Period tabs */}
-                  <div style={{ display: "flex", gap: 4, marginTop: 12, marginBottom: 16 }}>
-                    {["Year", "Month", "Week", "Day"].map(p => (
-                      <button key={p} onClick={() => setPortfolioPeriod(p)} style={{
-                        padding: "5px 14px", borderRadius: 8, border: "none",
-                        background: portfolioPeriod === p ? C.text : "rgba(0,0,0,0.03)",
-                        color: portfolioPeriod === p ? "#fff" : C.textSec,
-                        fontSize: 11, fontWeight: 600, cursor: "pointer",
-                        fontFamily: "'Inter', sans-serif",
-                        transition: "all 0.15s",
-                      }}>{p}</button>
-                    ))}
-                  </div>
+                  {/* Reactive hover tooltip above chart */}
+                  {portHoverIdx !== null && (
+                    <div style={{ fontSize: 12, color: C.textSec, marginBottom: 8, fontFamily: "monospace" }}>
+                      <span style={{ fontWeight: 700, color: C.text }}>{displayDate}</span>
+                      <span style={{ marginLeft: 12, fontWeight: 700, color: C.text, fontSize: 14 }}>${displayValue.toFixed(2)}</span>
+                    </div>
+                  )}
 
-                  {/* Reactive Line Chart */}
+                  {/* CANDLESTICK CHART */}
                   {(() => {
-                    const W = 520, H = 200, PAD_T = 16, PAD_B = 28, PAD_L = 40, PAD_R = 12;
-                    const chartH = H - PAD_T - PAD_B;
-                    const chartW = W - PAD_L - PAD_R;
-                    const step = chartW / (chartData.length - 1);
-                    const range = chartMax - chartMin || 1;
-                    const points = chartData.map((d, i) => ({
-                      x: PAD_L + i * step,
-                      y: PAD_T + chartH - ((d.v - chartMin) / range) * chartH,
-                    }));
+                    const W = 540, H = 240, PAD_T = 12, PAD_B = 32, PAD_L = 56, PAD_R = 12;
+                    const cH = H - PAD_T - PAD_B;
+                    const cW = W - PAD_L - PAD_R;
+                    const step = cW / chartData.length;
 
-                    // Smooth bezier
+                    // For candle mode: compute range from all OHLC
+                    const allVals = candles.flatMap(c => [c.high, c.low]);
+                    const cMax = Math.max(...allVals);
+                    const cMin = Math.min(...allVals);
+                    const cRange = cMax - cMin || 1;
+                    const toY = (v) => PAD_T + cH - ((v - cMin) / cRange) * cH;
+
+                    // For line mode
+                    const lineRange = chartMax - chartMin || 1;
+                    const toYLine = (v) => PAD_T + cH - ((v - chartMin) / lineRange) * cH;
+                    const points = chartData.map((d, i) => ({
+                      x: PAD_L + i * step + step / 2,
+                      y: toYLine(d.v),
+                    }));
                     const smoothLine = points.reduce((acc, p, i, arr) => {
                       if (i === 0) return `M${p.x},${p.y}`;
                       const prev = arr[i - 1];
                       const cpx = (prev.x + p.x) / 2;
                       return `${acc} C${cpx},${prev.y} ${cpx},${p.y} ${p.x},${p.y}`;
                     }, "");
-                    const smoothArea = smoothLine + ` L${points[points.length - 1].x},${PAD_T + chartH} L${points[0].x},${PAD_T + chartH} Z`;
+                    const smoothArea = smoothLine + ` L${points[points.length - 1].x},${PAD_T + cH} L${points[0].x},${PAD_T + cH} Z`;
 
-                    const hoverPt = portHoverIdx !== null ? points[portHoverIdx] : null;
-
-                    // Y-axis labels (5 ticks)
-                    const yTicks = [0, 0.25, 0.5, 0.75, 1].map(pct => ({
-                      y: PAD_T + chartH * (1 - pct),
-                      label: "$" + (chartMin + range * pct).toFixed(0),
-                    }));
-
-                    // Candlestick mode data (deterministic noise)
-                    const candles = chartData.map((d, i) => {
-                      const prev = i > 0 ? chartData[i - 1].v : d.v;
-                      const open = prev;
-                      const close = d.v;
-                      const noise1 = Math.sin(i * 2.3 + 7) * 0.025 + 0.015;
-                      const noise2 = Math.cos(i * 1.7 + 3) * 0.025 + 0.015;
-                      const high = Math.max(open, close) * (1 + noise1);
-                      const low = Math.min(open, close) * (1 - noise2);
-                      return { open, close, high, low };
+                    // Y-axis ticks
+                    const yTicks = [0, 0.2, 0.4, 0.6, 0.8, 1].map(pct => {
+                      const useRange = portChartMode === "candle" ? cRange : lineRange;
+                      const useMin = portChartMode === "candle" ? cMin : chartMin;
+                      return {
+                        y: PAD_T + cH * (1 - pct),
+                        label: (useMin + useRange * pct).toFixed(2),
+                      };
                     });
 
+                    // X-axis: distribute month labels
+                    const xLabels = chartData.map((d, i) => ({
+                      x: PAD_L + i * step + step / 2,
+                      label: d.d.length > 3 ? d.d.substring(0, 3) : d.d,
+                    }));
+
                     return (
-                      <div style={{ position: "relative" }}>
+                      <div style={{ position: "relative", flex: 1 }}>
                         <svg
                           width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet"
                           style={{ display: "block", cursor: "crosshair" }}
                           onMouseMove={e => {
                             const rect = e.currentTarget.getBoundingClientRect();
                             const mx = (e.clientX - rect.left) / rect.width * W;
-                            let closest = 0, minDist = Infinity;
-                            points.forEach((p, i) => { const dist = Math.abs(p.x - mx); if (dist < minDist) { minDist = dist; closest = i; } });
-                            setPortHoverIdx(closest);
+                            const idx = Math.max(0, Math.min(chartData.length - 1, Math.floor((mx - PAD_L) / step)));
+                            setPortHoverIdx(idx);
                           }}
                           onMouseLeave={() => setPortHoverIdx(null)}
                         >
-                          <defs>
-                            <linearGradient id="portAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={isPositive ? C.accent : C.red} stopOpacity={0.25} />
-                              <stop offset="100%" stopColor={isPositive ? C.accent : C.red} stopOpacity={0.02} />
-                            </linearGradient>
-                            <linearGradient id="portLineGrad" x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor={isPositive ? C.primary : C.red} />
-                              <stop offset="100%" stopColor={isPositive ? C.accent : "#F87171"} />
-                            </linearGradient>
-                          </defs>
-
-                          {/* Y-axis labels + grid */}
-                          {yTicks.map(t => (
-                            <g key={t.label}>
-                              <line x1={PAD_L} y1={t.y} x2={W - PAD_R} y2={t.y} stroke="rgba(0,0,0,0.04)" strokeWidth={1} />
-                              <text x={PAD_L - 6} y={t.y + 3} textAnchor="end" fill={C.textMuted} fontSize="9" fontFamily="monospace">{t.label}</text>
+                          {/* Y-axis grid + labels */}
+                          {yTicks.map((t, ti) => (
+                            <g key={ti}>
+                              <line x1={PAD_L} y1={t.y} x2={W - PAD_R} y2={t.y} stroke="rgba(0,0,0,0.05)" strokeWidth={1} />
+                              <text x={PAD_L - 8} y={t.y + 3} textAnchor="end" fill={C.textMuted} fontSize="9" fontFamily="monospace">{t.label}</text>
                             </g>
                           ))}
 
-                          {portChartMode === "line" ? (
-                            <>
-                              {/* Area fill */}
-                              <path d={smoothArea} fill="url(#portAreaGrad)" />
-                              {/* Line */}
-                              <path d={smoothLine} fill="none" stroke="url(#portLineGrad)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-                              {/* Data dots */}
-                              {points.map((p, i) => (
-                                <circle key={i} cx={p.x} cy={p.y} r={portHoverIdx === i ? 5.5 : 0}
-                                  fill={isPositive ? C.accent : C.red} stroke="#fff" strokeWidth={portHoverIdx === i ? 2.5 : 0}
-                                  style={{ transition: "all 0.1s ease" }} />
-                              ))}
-                            </>
+                          {portChartMode === "candle" ? (
+                            /* ── CANDLESTICK RENDERING ── */
+                            candles.map((c, i) => {
+                              const bullish = c.close >= c.open;
+                              const color = bullish ? C.green : C.red;
+                              const cx = PAD_L + i * step + step / 2;
+                              const cw = Math.max(10, step * 0.55);
+                              const bTop = toY(Math.max(c.open, c.close));
+                              const bBot = toY(Math.min(c.open, c.close));
+                              const wTop = toY(c.high);
+                              const wBot = toY(c.low);
+                              const bodyH = Math.max(3, bBot - bTop);
+                              const isHov = portHoverIdx === i;
+                              return (
+                                <g key={i}>
+                                  {/* Hover highlight column */}
+                                  {isHov && (
+                                    <rect x={cx - step / 2} y={PAD_T} width={step} height={cH}
+                                      fill="rgba(0,0,0,0.02)" rx={4} />
+                                  )}
+                                  {/* Wick */}
+                                  <line x1={cx} y1={wTop} x2={cx} y2={wBot}
+                                    stroke={color} strokeWidth={isHov ? 2.5 : 1.5} />
+                                  {/* Body */}
+                                  <rect x={cx - cw / 2} y={bTop} width={cw} height={bodyH}
+                                    rx={2}
+                                    fill={bullish ? `${color}30` : color}
+                                    stroke={color}
+                                    strokeWidth={isHov ? 2 : 1.2} />
+                                  {/* Hover dot on close price */}
+                                  {isHov && (
+                                    <circle cx={cx} cy={toY(c.close)} r={5}
+                                      fill={color} stroke="#fff" strokeWidth={2} />
+                                  )}
+                                </g>
+                              );
+                            })
                           ) : (
                             <>
-                              {/* Candlestick mode */}
-                              {candles.map((c, i) => {
-                                const bullish = c.close >= c.open;
-                                const cColor = bullish ? C.green : C.red;
-                                const bodyTop = PAD_T + chartH - ((Math.max(c.open, c.close) - chartMin) / range) * chartH;
-                                const bodyBot = PAD_T + chartH - ((Math.min(c.open, c.close) - chartMin) / range) * chartH;
-                                const wickTop = PAD_T + chartH - ((c.high - chartMin) / range) * chartH;
-                                const wickBot = PAD_T + chartH - ((c.low - chartMin) / range) * chartH;
-                                const cx = points[i].x;
-                                const cw = Math.max(8, step * 0.6);
-                                const isHov = portHoverIdx === i;
-                                return (
-                                  <g key={i} opacity={isHov ? 1 : 0.85} style={{ transition: "opacity 0.1s" }}>
-                                    {isHov && (
-                                      <rect x={cx - cw / 2 - 3} y={wickTop - 3} width={cw + 6} height={wickBot - wickTop + 6}
-                                        rx={4} fill={`${cColor}10`} stroke={cColor} strokeWidth={0.5} strokeOpacity={0.4} />
-                                    )}
-                                    <line x1={cx} y1={wickTop} x2={cx} y2={wickBot} stroke={cColor} strokeWidth={isHov ? 2 : 1.5} />
-                                    <rect x={cx - cw / 2} y={bodyTop} width={cw} height={Math.max(2, bodyBot - bodyTop)}
-                                      rx={2} fill={bullish ? `${cColor}40` : cColor} stroke={cColor} strokeWidth={isHov ? 1.5 : 1} />
-                                  </g>
-                                );
-                              })}
+                              <defs>
+                                <linearGradient id="portAreaG2" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor={isPositive ? C.accent : C.red} stopOpacity={0.2} />
+                                  <stop offset="100%" stopColor={isPositive ? C.accent : C.red} stopOpacity={0.01} />
+                                </linearGradient>
+                                <linearGradient id="portLineG2" x1="0" y1="0" x2="1" y2="0">
+                                  <stop offset="0%" stopColor={isPositive ? C.primary : C.red} />
+                                  <stop offset="100%" stopColor={isPositive ? C.accent : "#F87171"} />
+                                </linearGradient>
+                              </defs>
+                              <path d={smoothArea} fill="url(#portAreaG2)" />
+                              <path d={smoothLine} fill="none" stroke="url(#portLineG2)" strokeWidth={2.5} strokeLinecap="round" />
+                              {points.map((p, i) => (
+                                <circle key={i} cx={p.x} cy={p.y} r={portHoverIdx === i ? 6 : 0}
+                                  fill={isPositive ? C.accent : C.red} stroke="#fff" strokeWidth={portHoverIdx === i ? 2.5 : 0}
+                                  style={{ transition: "all 0.08s" }} />
+                              ))}
                             </>
                           )}
 
                           {/* Hover scrubber line */}
-                          {hoverPt && (
-                            <line x1={hoverPt.x} y1={PAD_T} x2={hoverPt.x} y2={PAD_T + chartH} stroke={C.textMuted} strokeWidth={1} strokeDasharray="4,3" opacity={0.4} />
+                          {portHoverIdx !== null && (
+                            <line x1={PAD_L + portHoverIdx * step + step / 2} y1={PAD_T} x2={PAD_L + portHoverIdx * step + step / 2} y2={PAD_T + cH}
+                              stroke={C.textMuted} strokeWidth={1} strokeDasharray="4,3" opacity={0.5} />
                           )}
 
                           {/* X-axis labels */}
-                          {chartData.map((d, i) => (
-                            i % Math.ceil(chartData.length / 8) === 0 && (
-                              <text key={i} x={points[i].x} y={H - 6} textAnchor="middle"
+                          {xLabels.map((l, i) => (
+                            i % Math.max(1, Math.ceil(chartData.length / 8)) === 0 && (
+                              <text key={i} x={l.x} y={H - 8} textAnchor="middle"
                                 fill={portHoverIdx === i ? C.text : C.textMuted} fontSize="9" fontFamily="monospace"
-                                style={{ transition: "fill 0.1s" }}>{d.d}</text>
+                                fontWeight={portHoverIdx === i ? 700 : 400}>{l.label}</text>
                             )
                           ))}
                         </svg>
 
-                        {/* Hover tooltip */}
+                        {/* Float tooltip */}
                         {portHoverIdx !== null && (() => {
                           const d = chartData[portHoverIdx];
-                          const leftPct = (points[portHoverIdx].x / W) * 100;
-                          const c = portChartMode === "candle" ? candles[portHoverIdx] : null;
+                          const c = candles[portHoverIdx];
+                          const leftPx = ((PAD_L + portHoverIdx * step + step / 2) / W) * 100;
                           return (
                             <div style={{
-                              position: "absolute", top: 0, left: `${leftPct}%`,
+                              position: "absolute", top: -4, left: `${leftPx}%`,
                               transform: "translateX(-50%)",
-                              background: "rgba(17,24,39,0.92)", backdropFilter: "blur(12px)",
+                              background: "rgba(17,24,39,0.94)", backdropFilter: "blur(16px)",
                               borderRadius: 10, padding: "10px 16px",
                               border: "1px solid rgba(255,255,255,0.1)",
-                              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+                              boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
                               whiteSpace: "nowrap", pointerEvents: "none", zIndex: 10,
                             }}>
-                              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 3, fontFamily: "monospace" }}>{d.d}</div>
-                              <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>${d.v.toFixed(2)}</div>
-                              {c && (
-                                <div style={{ display: "flex", gap: 8, fontSize: 10, marginTop: 4, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 4 }}>
-                                  <span style={{ color: C.green }}>O: ${c.open.toFixed(2)}</span>
-                                  <span style={{ color: "rgba(255,255,255,0.5)" }}>H: ${c.high.toFixed(2)}</span>
-                                  <span style={{ color: "rgba(255,255,255,0.5)" }}>L: ${c.low.toFixed(2)}</span>
-                                  <span style={{ color: c.close >= c.open ? C.green : C.red }}>C: ${c.close.toFixed(2)}</span>
+                              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontFamily: "monospace", marginBottom: 3 }}>{d.d}</div>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>${d.v.toFixed(2)}</div>
+                              {portChartMode === "candle" && (
+                                <div style={{ display: "flex", gap: 6, fontSize: 9, marginTop: 4, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 4, fontFamily: "monospace" }}>
+                                  <span style={{ color: C.green }}>O {c.open.toFixed(2)}</span>
+                                  <span style={{ color: "rgba(255,255,255,0.5)" }}>H {c.high.toFixed(2)}</span>
+                                  <span style={{ color: "rgba(255,255,255,0.5)" }}>L {c.low.toFixed(2)}</span>
+                                  <span style={{ color: c.close >= c.open ? C.green : C.red }}>C {c.close.toFixed(2)}</span>
                                 </div>
                               )}
                             </div>
@@ -1545,72 +1563,109 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
                       </div>
                     );
                   })()}
-                </div>
 
-                {/* ── Right Stats Panel ── */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  {/* Bottom toolbar: chart type icons + period pills */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 12, borderTop: "1px solid rgba(0,0,0,0.05)" }}>
+                    <div style={{ display: "flex", gap: 2, background: "rgba(0,0,0,0.04)", borderRadius: 8, padding: 2 }}>
+                      {[{ key: "line", icon: "📈" }, { key: "candle", icon: "📊" }].map(m => (
+                        <button key={m.key} onClick={() => setPortChartMode(m.key)} style={{
+                          width: 32, height: 28, borderRadius: 6, border: "none",
+                          background: portChartMode === m.key ? "#fff" : "transparent",
+                          boxShadow: portChartMode === m.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+                          fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                          transition: "all 0.15s",
+                        }}>{m.icon}</button>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", gap: 2, background: "rgba(0,0,0,0.04)", borderRadius: 8, padding: 2 }}>
+                      {["Year", "Month", "Week", "Day"].map(p => (
+                        <button key={p} onClick={() => setPortfolioPeriod(p)} style={{
+                          padding: "5px 14px", borderRadius: 6, border: "none",
+                          background: portfolioPeriod === p ? C.text : "transparent",
+                          color: portfolioPeriod === p ? "#fff" : C.textSec,
+                          fontSize: 11, fontWeight: 600, cursor: "pointer",
+                          fontFamily: "'Inter', sans-serif", transition: "all 0.15s",
+                        }}>{p}</button>
+                      ))}
+                    </div>
+                  </div>
 
-                  {/* Stats Card */}
-                  <div style={{
-                    background: "rgba(255,255,255,0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-                    borderRadius: 20, padding: "22px",
-                    border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-                    display: "flex", flexDirection: "column", gap: 20,
-                  }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "monospace" }}>Performance</div>
+                  {/* Stats row under chart (like reference right side) */}
+                  <div style={{ display: "flex", gap: 24, marginTop: 16 }}>
                     {[
-                      { label: "Gain to Pain Ratio", value: "1.8", color: C.green },
-                      { label: "Reward to Risk Ratio", value: "2.4", color: C.accent },
-                      { label: "Total Invested", value: `$${totalCost.toFixed(0)}`, color: C.primary },
+                      { label: "Gain to pain ratio", value: "1.8" },
+                      { label: "Reward to risk ratio", value: "2.4" },
+                      { label: "Total invested", value: `$${totalCost.toFixed(0)}` },
                     ].map(s => (
                       <div key={s.label}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                          <span style={{ fontSize: 12, color: C.textSec }}>{s.label}</span>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: C.text, fontFamily: "monospace" }}>{s.value}</span>
-                        </div>
-                        <div style={{ height: 4, borderRadius: 2, background: "rgba(0,0,0,0.04)" }}>
-                          <div style={{ height: "100%", borderRadius: 2, width: `${parseFloat(s.value) > 10 ? 80 : parseFloat(s.value) * 35}%`, background: s.color, transition: "width 0.4s ease" }} />
-                        </div>
+                        <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 2 }}>{s.label}</div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: C.text, fontFamily: "monospace" }}>{s.value}</div>
                       </div>
                     ))}
                   </div>
+                </div>
 
-                  {/* Best Call Card */}
-                  {bestCall && (
-                    <div
-                      onClick={() => guardedClick(() => setSelectedArtist(bestCall))}
-                      style={{
-                        background: `linear-gradient(135deg, ${C.primary}, #5B6AE8)`,
-                        borderRadius: 20, padding: "20px 22px",
-                        boxShadow: `0 8px 32px ${C.primary}30`,
-                        cursor: "pointer", transition: "all 0.2s",
-                        position: "relative", overflow: "hidden",
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; }}
-                    >
-                      <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
-                      <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "monospace", marginBottom: 8 }}>Your Best Call</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "2px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{bestCall.emoji}</div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{bestCall.name}</div>
-                          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{bestCall.genre}</div>
-                        </div>
-                        <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: 18, fontWeight: 700, color: "#A7F3D0" }}>+{bestCallPct}%</div>
-                          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>+${((bestCall.price - bestCall.avgCost) * bestCall.shares).toFixed(2)}</div>
-                        </div>
-                      </div>
+                {/* ── RIGHT: Market Insights Card ── */}
+                <div style={{
+                  background: "rgba(255,255,255,0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+                  borderRadius: 20, padding: "22px",
+                  border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+                  display: "flex", flexDirection: "column",
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Market Insights</div>
+                    <div style={{ width: 24, height: 24, borderRadius: 8, background: "rgba(0,0,0,0.04)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>✨</div>
+                  </div>
+
+                  {/* Chat-like UI */}
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+                    <div style={{
+                      background: `${C.primary}08`, borderRadius: "14px 14px 14px 4px",
+                      padding: "12px 14px", fontSize: 12, color: C.textSec, lineHeight: 1.5,
+                    }}>
+                      Where should I focus my investments this week?
                     </div>
-                  )}
+                    <div style={{
+                      background: "rgba(0,0,0,0.02)", borderRadius: "14px 14px 4px 14px",
+                      padding: "14px 16px", fontSize: 12, color: C.text, lineHeight: 1.6,
+                    }}>
+                      Based on current market trends:<br />
+                      <span style={{ fontWeight: 600 }}>• {sorted[0]?.name}</span> — strong momentum, +{sorted[0]?.change}% this week<br />
+                      <span style={{ fontWeight: 600 }}>• {sorted[1]?.name}</span> — undervalued, good entry point<br />
+                      <span style={{ fontWeight: 600 }}>• Consider rebalancing</span> your {sorted[sorted.length - 1]?.name} position
+                    </div>
+                  </div>
+
+                  {/* Model pills */}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                    {["Trend AI", "Volume AI", "Sentiment", "Candle Analysis"].map(tag => (
+                      <div key={tag} style={{
+                        padding: "4px 10px", borderRadius: 6, fontSize: 10, fontWeight: 600,
+                        background: "rgba(0,0,0,0.04)", color: C.textSec,
+                      }}>{tag}</div>
+                    ))}
+                  </div>
+
+                  {/* Input */}
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    background: "rgba(0,0,0,0.03)", borderRadius: 10, padding: "8px 12px",
+                    border: "1px solid rgba(0,0,0,0.06)",
+                  }}>
+                    <span style={{ fontSize: 14, color: C.textMuted }}>+</span>
+                    <div style={{ flex: 1, fontSize: 12, color: C.textMuted }}>Ask about your portfolio...</div>
+                    <span style={{ fontSize: 14, color: C.textMuted }}>🎤</span>
+                    <div style={{ width: 24, height: 24, borderRadius: "50%", background: C.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ color: "#fff", fontSize: 12 }}>↑</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* ── Bottom Row: Transfers + Spending Overview ── */}
+              {/* ═══ ROW 4: Transfers + Spending Overview ═══ */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
 
-                {/* Transfers Card */}
+                {/* Transfers */}
                 <div style={{
                   background: "rgba(255,255,255,0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
                   borderRadius: 20, padding: "22px",
@@ -1620,45 +1675,49 @@ export default function CrescendoDashboard({ navigate, initialTab = "Dashboard",
                     <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Transfers</div>
                     <div style={{ fontSize: 11, color: C.primary, fontWeight: 600, cursor: "pointer" }}>View all</div>
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                     {transfers.map((t, i) => (
                       <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
                         <div style={{
-                          width: 36, height: 36, borderRadius: "50%",
-                          background: t.type === "buy" ? `${C.green}15` : t.type === "sell" ? `${C.red}15` : `${C.primary}10`,
-                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
-                        }}>{t.emoji}</div>
+                          width: 38, height: 38, borderRadius: 12,
+                          background: t.type === "sell" ? `${C.red}10` : t.type === "buy" ? `${C.green}10` : `${C.primary}08`,
+                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
+                        }}>{t.type === "sell" ? "↗" : t.type === "buy" ? "↙" : "💰"}</div>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{t.type === "buy" ? "Bought" : t.type === "sell" ? "Sold" : "Dividend"} {t.artist}</div>
-                          <div style={{ fontSize: 11, color: C.textMuted }}>{t.time}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{t.label}</div>
+                          <div style={{ fontSize: 10, color: C.textMuted, fontFamily: "monospace" }}>{t.addr}</div>
                         </div>
-                        <div style={{
-                          fontSize: 13, fontWeight: 700, fontFamily: "monospace",
-                          color: t.type === "buy" ? C.red : C.green,
-                        }}>{t.type === "buy" ? "-" : "+"}${t.amount.toFixed(2)}</div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{
+                            fontSize: 13, fontWeight: 700, fontFamily: "monospace",
+                            color: t.type === "sell" ? C.red : C.green,
+                          }}>{t.type === "sell" ? "-" : "+"}${t.amount.toFixed(2)}</div>
+                          <div style={{ fontSize: 10, color: C.textMuted }}>{t.time}</div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Spending Overview Card */}
+                {/* Spending Overview */}
                 <div style={{
                   background: "rgba(255,255,255,0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
                   borderRadius: 20, padding: "22px",
                   border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
                 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Investment Overview</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Spending Overview</div>
                     <div style={{ fontSize: 11, color: C.primary, fontWeight: 600, cursor: "pointer" }}>Details</div>
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: C.text, marginBottom: 16 }}>${totalValue.toFixed(2)}</div>
+                  <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em", color: C.text, marginBottom: 2 }}>${totalValue.toFixed(2)}</div>
+                  <div style={{ fontSize: 11, color: C.red, fontWeight: 600, fontFamily: "monospace", marginBottom: 16 }}>-$30.00 This week</div>
 
                   {/* Segmented bar */}
-                  <div style={{ display: "flex", height: 10, borderRadius: 5, overflow: "hidden", marginBottom: 16, gap: 2 }}>
+                  <div style={{ display: "flex", height: 12, borderRadius: 6, overflow: "hidden", marginBottom: 16, gap: 2 }}>
                     {allocations.map((a, i) => (
                       <div key={i} style={{
-                        flex: a.value, background: a.color, borderRadius: i === 0 ? "5px 0 0 5px" : i === allocations.length - 1 ? "0 5px 5px 0" : 0,
-                        transition: "flex 0.4s ease",
+                        flex: a.value, background: a.color,
+                        borderRadius: i === 0 ? "6px 0 0 6px" : i === allocations.length - 1 ? "0 6px 6px 0" : 0,
                       }} />
                     ))}
                   </div>
